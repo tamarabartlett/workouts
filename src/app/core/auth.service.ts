@@ -1,6 +1,5 @@
 import { Injectable, signal } from '@angular/core';
 import * as bcrypt from 'bcryptjs';
-import { environment } from '../../environments/environment';
 
 const STORAGE_KEY = 'workouts_authenticated';
 
@@ -13,8 +12,8 @@ export class AuthService {
   }
 
   login(username: string, password: string): boolean {
-    const userOk = username.trim() === environment.allowedUsername;
-    const passwordOk = bcrypt.compareSync(password, environment.allowedPasswordHash);
+    const userOk = username.trim() === process.env.ALLOWED_USERNAME;
+    const passwordOk = bcrypt.compareSync(password, process.env.ALLOWED_PASSWORD_HASH);
     if (!userOk || !passwordOk) {
       return false;
     }
