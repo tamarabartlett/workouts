@@ -52,7 +52,11 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.scss"]
+            "styles": ["src/styles.scss"],
+            "define": {
+              "process.env.ALLOWED_USERNAME": "",
+              "process.env.ALLOWED_PASSWORD_HASH": ""
+            }
           },
           "configurations": {
             "production": {
