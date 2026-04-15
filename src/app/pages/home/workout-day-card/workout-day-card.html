@@ -1,0 +1,25 @@
+<mat-card class="workout-day-card" appearance="outlined">
+  <mat-card-header class="card-header">
+    <mat-card-title>{{ date() | date: 'fullDate' }}</mat-card-title>
+    <span class="header-spacer" aria-hidden="true"></span>
+    <button
+      matButton
+      type="button"
+      (click)="toggleEditing()"
+      [attr.aria-pressed]="isEditing()"
+      [attr.aria-label]="isEditing() ? 'Finish editing workout' : 'Edit workout'"
+    >
+      {{ isEditing() ? 'Done' : 'Edit' }}
+    </button>
+  </mat-card-header>
+  <mat-card-content class="card-body">
+    @for (ex of exercises(); track $index) {
+      <app-exercise
+        [exercise]="ex"
+        [exerciseIndex]="$index"
+        [editable]="isEditing()"
+        (patchSet)="patchSet.emit($event)"
+      />
+    }
+  </mat-card-content>
+</mat-card>

@@ -1,32 +1,58 @@
-// .home-layout {
-//   display: flex;
-//   flex-direction: column;
-//   min-height: 100%;
-// }
+.home-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
 
-// .app-toolbar {
-//   background: var(--mat-sys-primary-container);
-//   color: var(--mat-sys-on-primary-container);
-// }
+.app-toolbar {
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+}
 
-// .toolbar-title {
-//   font-weight: 500;
-// }
+.toolbar-title {
+  font-weight: 500;
+}
 
-// .spacer {
-//   flex: 1;
-// }
+.spacer {
+  flex: 1;
+}
 
-// .home-main {
-//   flex: 1;
-//   display: flex;
-//   align-items: center;
-//   justify-content: center;
-//   padding: 2rem;
-// }
+.home-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 2rem 1.5rem 3rem;
+  box-sizing: border-box;
+}
 
-// .welcome {
-//   margin: 0;
-//   font: var(--mat-sys-headline-large);
-//   text-align: center;
-// }
+.welcome {
+  margin: 0;
+  font: var(--mat-sys-headline-small);
+  text-align: center;
+  color: var(--mat-sys-on-surface);
+}
+
+.workout-list {
+  width: 100%;
+  max-width: 36rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.load-error {
+  margin: 0;
+  color: var(--mat-sys-error);
+  font: var(--mat-sys-body-medium);
+  text-align: center;
+  max-width: 28rem;
+}
+
+.empty-hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+  text-align: center;
+}

@@ -1,0 +1,36 @@
+<section class="exercise">
+  <h3 class="exercise-name">{{ exercise().name }}</h3>
+  <ol class="sets" aria-label="Sets">
+    @for (set of exercise().sets; track $index) {
+      <li class="set-row">
+        <span class="set-label">Set {{ $index + 1 }}</span>
+        @if (editable()) {
+          <input
+            class="set-input set-reps-input"
+            type="number"
+            min="0"
+            step="1"
+            [value]="set.reps"
+            (input)="onRepsChange($index, $event)"
+            [attr.aria-label]="'Reps for set ' + ($index + 1) + ', ' + exercise().name"
+          />
+          <span class="set-weight-edit">
+            <input
+              class="set-input set-weight-input"
+              type="number"
+              min="0"
+              step="0.5"
+              [value]="set.weight"
+              (input)="onWeightChange($index, $event)"
+              [attr.aria-label]="'Weight for set ' + ($index + 1) + ', ' + exercise().name"
+            />
+            <span class="set-unit">{{ set.weightUnit }}</span>
+          </span>
+        } @else {
+          <span class="set-reps">{{ set.reps }} reps</span>
+          <span class="set-weight">{{ set.weight }} {{ set.weightUnit }}</span>
+        }
+      </li>
+    }
+  </ol>
+</section>

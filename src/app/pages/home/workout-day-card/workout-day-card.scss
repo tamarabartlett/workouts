@@ -1,0 +1,23 @@
+.workout-day-card {
+  width: 100%;
+  max-width: 32rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.header-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-body {
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}

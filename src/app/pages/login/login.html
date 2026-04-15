@@ -20,6 +20,10 @@
             <mat-error>Password is required</mat-error>
           }
         </mat-form-field>
+        <mat-radio-group formControlName="rememberMe" class="remember-group">
+          <mat-radio-button [value]="true">Remember me</mat-radio-button>
+          <mat-radio-button [value]="false">Do not remember</mat-radio-button>
+        </mat-radio-group>
         @if (error()) {
           <p class="form-error" role="alert">{{ error() }}</p>
         }

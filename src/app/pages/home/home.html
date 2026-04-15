@@ -6,5 +6,22 @@
   </mat-toolbar>
   <main class="home-main">
     <h1 class="welcome">Welcome Workouteer</h1>
+    @if (loading()) {
+      <mat-spinner diameter="40" aria-label="Loading workouts" />
+    } @else if (loadError(); as err) {
+      <p class="load-error" role="alert">{{ err }}</p>
+    } @else if (workouts().length === 0) {
+      <p class="empty-hint">No workouts yet. POST to <code>/api/workouts</code> or add documents in MongoDB.</p>
+    } @else {
+      <div class="workout-list">
+        @for (w of workouts(); track w._id) {
+          <app-workout-day-card
+            [date]="parseWorkoutDate(w.date)"
+            [exercises]="w.exercises"
+            (patchSet)="onSetPatched(w._id, $event)"
+          />
+        }
+      </div>
+    }
   </main>
 </div>
