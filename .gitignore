@@ -44,3 +44,7 @@ __screenshots__/
 .DS_Store
 Thumbs.db
 remember.md
+
+# Auth secrets (generated at build; local overrides)
+.env.local
+src/auth-secrets.generated.ts
