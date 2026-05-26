@@ -1,89 +1,233 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import {
+  Component,
+  ElementRef,
+  computed,
+  inject,
+  linkedSignal,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
-import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatIconModule } from '@angular/material/icon';
+import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { DatePipe } from '@angular/common';
+import { map } from 'rxjs/operators';
 import { AuthService } from '../../core/auth.service';
-import { WorkoutApiService } from '../../core/workout-api.service';
+import {
+  WORKOUT_HISTORY_FILENAME,
+  WorkoutStoreService,
+} from '../../core/workout-store.service';
+import { NewWorkoutFormComponent } from './new-workout-form/new-workout-form';
 import type { Workout, WorkoutSetPatchEvent } from './workout.types';
 import { WorkoutDayCardComponent } from './workout-day-card/workout-day-card';
+
+/**
+ * Min width at which the workouts sidenav stays pinned open as a permanent
+ * column. Below this we switch to an overlay sidenav toggled by a hamburger.
+ */
+const SIDENAV_BREAKPOINT = '(min-width: 960px)';
+
+type MainView = 'welcome' | 'new' | 'edit';
 
 @Component({
   selector: 'app-home',
   imports: [
     MatToolbarModule,
     MatButtonModule,
-    MatProgressSpinnerModule,
+    MatIconModule,
+    MatSidenavModule,
+    DatePipe,
     WorkoutDayCardComponent,
+    NewWorkoutFormComponent,
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
-export class HomePage implements OnInit {
+export class HomePage {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly workoutsApi = inject(WorkoutApiService);
+  private readonly store = inject(WorkoutStoreService);
+  private readonly breakpointObserver = inject(BreakpointObserver);
 
-  protected readonly workouts = signal<Workout[]>([]);
-  protected readonly loading = signal(true);
-  protected readonly loadError = signal<string | null>(null);
+  protected readonly workouts = this.store.workouts;
+  protected readonly lastExerciseSessions = this.store.lastExerciseSessions;
+  protected readonly statusMessage = signal<string | null>(null);
+  protected readonly statusKind = signal<'info' | 'error'>('info');
 
-  ngOnInit(): void {
-    this.workoutsApi.list().subscribe({
-      next: (rows) => {
-        this.workouts.set(rows);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.loadError.set('Could not load workouts. Is the API running and MONGODB_URI set?');
-        this.loading.set(false);
-      },
-    });
-  }
+  /** Currently selected workout id; drives the 'edit' view in the main pane. */
+  protected readonly selectedWorkoutId = signal<string | null>(null);
+  protected readonly selectedWorkout = computed<Workout | null>(() => {
+    const id = this.selectedWorkoutId();
+    if (!id) return null;
+    return this.workouts().find((w) => w.id === id) ?? null;
+  });
+
+  /** What the main pane is showing right now. */
+  protected readonly mainView = signal<MainView>('welcome');
+
+  /** True when the viewport is wide enough for a permanent sidenav. */
+  protected readonly isWideScreen = toSignal(
+    this.breakpointObserver
+      .observe(SIDENAV_BREAKPOINT)
+      .pipe(map((s) => s.matches)),
+    { initialValue: false },
+  );
+
+  /** 'side' = permanent column on wide screens; 'over' = overlay on narrow. */
+  protected readonly sidenavMode = computed(() =>
+    this.isWideScreen() ? 'side' : 'over',
+  );
+
+  /**
+   * Default to open on wide screens, closed on narrow. Writable so the
+   * hamburger button and overlay backdrop can toggle it on narrow screens
+   * without `isWideScreen` snapping it back.
+   */
+  protected readonly sidenavOpened = linkedSignal(() => this.isWideScreen());
+
+  private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
   protected parseWorkoutDate(iso: string): Date {
     return new Date(iso);
   }
 
+  protected toggleSidenav(): void {
+    this.sidenavOpened.update((v) => !v);
+  }
+
+  protected onSidenavOpenedChange(opened: boolean): void {
+    this.sidenavOpened.set(opened);
+  }
+
+  /**
+   * Return to the home view that shows the "Next workout" summary (or the
+   * welcome state when there's no history yet). Wired to the toolbar brand.
+   */
+  protected goToNextWorkout(): void {
+    this.selectedWorkoutId.set(null);
+    this.mainView.set('welcome');
+    this.closeSidenavIfOverlay();
+  }
+
+  /** Switch the main pane to the new-workout form. Auto-closes overlay sidenav. */
+  protected startNewWorkout(): void {
+    this.selectedWorkoutId.set(null);
+    this.mainView.set('new');
+    this.closeSidenavIfOverlay();
+  }
+
+  /** Select an existing workout for editing in the main pane. */
+  protected selectWorkout(id: string): void {
+    this.selectedWorkoutId.set(id);
+    this.mainView.set('edit');
+    this.closeSidenavIfOverlay();
+  }
+
+  /** Compact summary shown next to each workout item in the sidenav. */
+  protected summarize(w: Workout): string {
+    const exerciseCount = w.exercises.length;
+    const setCount = w.exercises.reduce((n, ex) => n + ex.sets.length, 0);
+    return `${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'} · ${setCount} set${setCount === 1 ? '' : 's'}`;
+  }
+
   protected onSetPatched(workoutId: string, ev: WorkoutSetPatchEvent): void {
-    this.workouts.update((list) =>
-      list.map((w) =>
-        w._id !== workoutId
-          ? w
-          : {
-              ...w,
-              exercises: w.exercises.map((ex, exerciseIndex) =>
-                exerciseIndex !== ev.exerciseIndex
-                  ? ex
-                  : {
-                      ...ex,
-                      sets: ex.sets.map((set, setIndex) =>
-                        setIndex !== ev.setIndex
-                          ? set
-                          : { ...set, reps: ev.reps, weight: ev.weight },
-                      ),
-                    },
-              ),
-            },
-      ),
+    const current = this.workouts().find((w) => w.id === workoutId);
+    if (!current) return;
+    const exercises = current.exercises.map((ex, exerciseIndex) =>
+      exerciseIndex !== ev.exerciseIndex
+        ? ex
+        : {
+            ...ex,
+            sets: ex.sets.map((set, setIndex) =>
+              setIndex !== ev.setIndex
+                ? set
+                : { ...set, reps: ev.reps, weight: ev.weight },
+            ),
+          },
     );
-    const updated = this.workouts().find((w) => w._id === workoutId);
-    if (!updated) {
-      return;
+    this.store.patchExercises(workoutId, exercises);
+  }
+
+  protected onNoteChanged(workoutId: string, note: string): void {
+    this.store.patchNote(workoutId, note);
+  }
+
+  protected onNewWorkoutSaved(workout: Workout): void {
+    this.store.addWorkout(workout);
+    this.flashStatus(
+      'info',
+      `Added new workout with ${workout.exercises.length} exercise(s).`,
+    );
+    this.selectedWorkoutId.set(workout.id);
+    this.mainView.set('edit');
+  }
+
+  protected onNewWorkoutCancelled(): void {
+    this.mainView.set('welcome');
+  }
+
+  protected exportHistory(): void {
+    const json = JSON.stringify(this.store.toHistoryFile(), null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = WORKOUT_HISTORY_FILENAME;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    this.flashStatus('info', `Exported ${this.workouts().length} workout(s).`);
+  }
+
+  protected triggerImport(): void {
+    this.fileInput()?.nativeElement.click();
+  }
+
+  protected async onImportFileSelected(event: Event): Promise<void> {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const workouts = this.store.parseHistoryText(text);
+      this.store.replaceAll(workouts);
+      this.flashStatus('info', `Imported ${workouts.length} workout(s).`);
+      // Reset the main pane since the previously-selected workout may no
+      // longer exist in the freshly-imported set.
+      this.selectedWorkoutId.set(null);
+      this.mainView.set('welcome');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Unknown error.';
+      this.flashStatus('error', `Import failed: ${message}`);
     }
-    this.workoutsApi.patch(workoutId, { exercises: updated.exercises }).subscribe({
-      next: (doc) => {
-        this.workouts.update((list) => list.map((w) => (w._id === doc._id ? doc : w)));
-      },
-      error: () => {
-        this.loadError.set('Could not save workout changes.');
-        void this.workoutsApi.list().subscribe({ next: (rows) => this.workouts.set(rows) });
-      },
-    });
   }
 
   protected logout(): void {
     this.auth.logout();
     void this.router.navigateByUrl('/login');
+  }
+
+  private flashStatus(kind: 'info' | 'error', message: string): void {
+    this.statusKind.set(kind);
+    this.statusMessage.set(message);
+  }
+
+  /** Clear the status banner. Wired to the banner's close button. */
+  protected dismissStatus(): void {
+    this.statusMessage.set(null);
+  }
+
+  /**
+   * On narrow screens the sidenav is an overlay; after the user picks an
+   * action we close it so the main pane is fully visible.
+   */
+  private closeSidenavIfOverlay(): void {
+    if (!this.isWideScreen()) this.sidenavOpened.set(false);
   }
 }

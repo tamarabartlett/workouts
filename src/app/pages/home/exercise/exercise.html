@@ -2,7 +2,7 @@
   <h3 class="exercise-name">{{ exercise().name }}</h3>
   <ol class="sets" aria-label="Sets">
     @for (set of exercise().sets; track $index) {
-      <li class="set-row">
+      <li class="set-row" [class.set-row--editing]="editable()">
         <span class="set-label">Set {{ $index + 1 }}</span>
         @if (editable()) {
           <input

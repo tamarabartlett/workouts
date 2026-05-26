@@ -1,0 +1,117 @@
+<mat-card class="new-workout-form-card" appearance="outlined">
+  <mat-card-header class="card-header">
+    <mat-card-title>New workout</mat-card-title>
+    <span class="header-spacer" aria-hidden="true"></span>
+    <span class="subtitle">{{ nowIso | date: 'fullDate' }}</span>
+  </mat-card-header>
+
+  <mat-card-content class="card-body">
+    <mat-form-field appearance="outline" class="note-field">
+      <mat-label>Note (optional)</mat-label>
+      <textarea
+        matInput
+        rows="2"
+        [formControl]="noteCtrl"
+        placeholder="How did it feel? Any tweaks?"
+        autocomplete="off"
+      ></textarea>
+    </mat-form-field>
+
+    @if (draftExercises().length > 0) {
+      <ol class="draft-list" aria-label="Exercises in this workout">
+        @for (ex of draftExercises(); track $index) {
+          <li class="draft-row">
+            <div class="draft-info">
+              <span class="draft-name">{{ ex.name }}</span>
+              <span class="draft-meta">
+                {{ ex.reps }} reps &middot; {{ ex.weight }} {{ ex.weightUnit }}
+              </span>
+            </div>
+            <button
+              matButton
+              type="button"
+              (click)="removeDraft($index)"
+              [attr.aria-label]="'Remove ' + ex.name"
+            >
+              Remove
+            </button>
+          </li>
+        }
+      </ol>
+    } @else {
+      <p class="empty-hint">No exercises added yet. Pick one below to get started.</p>
+    }
+
+    <form
+      class="add-form"
+      [formGroup]="addExerciseForm"
+      (ngSubmit)="addExercise()"
+    >
+      <mat-form-field appearance="outline" class="exercise-select">
+        <mat-label>Exercise</mat-label>
+        <mat-select formControlName="selectedName">
+          @for (name of knownNames(); track name) {
+            <mat-option [value]="name">{{ name }}</mat-option>
+          }
+          <mat-option [value]="OTHER_VALUE">Other&hellip;</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      @if (isOther()) {
+        <mat-form-field appearance="outline" class="custom-name">
+          <mat-label>New exercise name</mat-label>
+          <input
+            matInput
+            type="text"
+            formControlName="customName"
+            autocomplete="off"
+            placeholder="e.g. Bulgarian split squat"
+          />
+        </mat-form-field>
+      }
+
+      <div class="set-fields">
+        <mat-form-field appearance="outline" class="num-field">
+          <mat-label>Reps</mat-label>
+          <input matInput type="number" min="0" step="1" formControlName="reps" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="num-field">
+          <mat-label>Weight</mat-label>
+          <input
+            matInput
+            type="number"
+            min="0"
+            step="0.5"
+            formControlName="weight"
+          />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="unit-field">
+          <mat-label>Unit</mat-label>
+          <mat-select formControlName="weightUnit">
+            <mat-option value="lb">lb</mat-option>
+            <mat-option value="kg">kg</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <button matButton="filled" type="submit" class="add-button">
+        <mat-icon>add</mat-icon>
+        Add exercise
+      </button>
+    </form>
+  </mat-card-content>
+
+  <mat-card-actions align="end" class="card-actions">
+    <button matButton type="button" (click)="onCancel()">Discard</button>
+    <button
+      matButton="filled"
+      type="button"
+      [disabled]="!canSave()"
+      (click)="onSave()"
+    >
+      Save workout
+    </button>
+  </mat-card-actions>
+</mat-card>

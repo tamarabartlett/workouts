@@ -21,3 +21,27 @@
   flex-direction: column;
   gap: 0;
 }
+
+.note-panel {
+  margin-bottom: 0.75rem;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.note-preview {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note-field {
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.note-display {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+  white-space: pre-wrap;
+}

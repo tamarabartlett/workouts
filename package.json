@@ -23,9 +23,7 @@
     "@angular/material": "^21.2.6",
     "@angular/platform-browser": "^21.2.0",
     "@angular/router": "^21.2.0",
-    "@vercel/node": "^5.7.6",
     "bcryptjs": "^3.0.3",
-    "mongoose": "^9.4.1",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },

@@ -78,14 +78,22 @@
 }
 
 @media (max-width: 480px) {
+  // Keep set #, reps, and weight on a single line on phones.
   .set-row {
-    grid-template-columns: 1fr;
-    gap: 0.25rem;
+    grid-template-columns: auto 1fr 1fr;
+    column-gap: 0.5rem;
+    row-gap: 0.5rem;
   }
 
-  .set-reps,
-  .set-weight {
-    text-align: start;
-    padding-left: 0;
+  // Let inputs fill their grid column instead of capping at 6rem so the
+  // weight/reps fields don't look cramped in a narrow column.
+  .set-input {
+    max-width: 100%;
+  }
+
+  // Don't let the weight input wrap below its unit on narrow widths; let
+  // flex shrink the input instead so "<num> lb" stays on one line.
+  .set-weight-edit {
+    flex-wrap: nowrap;
   }
 }

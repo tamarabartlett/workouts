@@ -1,0 +1,116 @@
+.new-workout-form-card {
+  width: 100%;
+  max-width: 36rem;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.header-spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.subtitle {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.card-body {
+  padding-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.note-field {
+  width: 100%;
+}
+
+.draft-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.draft-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  background: var(--mat-sys-surface-container-low);
+}
+
+.draft-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.draft-name {
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+}
+
+.draft-meta {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.empty-hint {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-body-medium);
+}
+
+.add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.exercise-select,
+.custom-name {
+  width: 100%;
+}
+
+.set-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr minmax(5rem, auto);
+  gap: 0.5rem;
+}
+
+.num-field,
+.unit-field {
+  width: 100%;
+}
+
+.add-button {
+  align-self: flex-start;
+}
+
+.card-actions {
+  padding: 0 1rem 1rem;
+}
+
+@media (max-width: 480px) {
+  .set-fields {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .unit-field {
+    grid-column: 1 / -1;
+  }
+}

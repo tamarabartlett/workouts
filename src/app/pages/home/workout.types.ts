@@ -11,17 +11,52 @@ export interface Exercise {
   sets: WorkoutSet[];
 }
 
-/** Workout document from the API / MongoDB */
+/** A single workout session as stored in `workoutHistory.json`. */
 export interface Workout {
-  _id: string;
-  /** ISO date string from JSON */
+  id: string;
   date: string;
   exercises: Exercise[];
-  createdAt?: string;
-  updatedAt?: string;
+  /**
+   * Free-form note the user can attach to the session (e.g. "felt strong",
+   * "tweaked left shoulder"). Optional; absent/empty means no note.
+   */
+  note?: string;
 }
 
-/** Emitted when reps or weight for a set is edited (immutable updates in parent). */
+/** Top-level shape of `workoutHistory.json`. */
+export interface WorkoutHistoryFile {
+  version: number;
+  exportedAt: string;
+  workouts: Workout[];
+}
+
+/**
+ * Suggested defaults for the next time a given exercise is performed.
+ * Currently derived from the last set of the most recent workout that
+ * contained the exercise, and used to pre-fill the new-workout dialog so
+ * users don't have to re-enter the weight they were lifting last session.
+ */
+export interface NextWorkoutDefaults {
+  reps: number;
+  weight: number;
+  weightUnit: string;
+}
+
+/**
+ * The most recent set performed for a given exercise, including the date
+ * of the workout it happened in. Used to render the "Next workout" summary
+ * on the home screen.
+ */
+export interface LastExerciseSession {
+  name: string;
+  reps: number;
+  weight: number;
+  weightUnit: string;
+  /** ISO date string of the workout the last set was performed in. */
+  date: string;
+}
+
+/** Emitted when reps or weight is edited (immutable updates in parent). */
 export interface WorkoutSetPatchEvent {
   exerciseIndex: number;
   setIndex: number;

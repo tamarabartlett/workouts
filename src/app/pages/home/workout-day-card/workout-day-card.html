@@ -13,6 +13,32 @@
     </button>
   </mat-card-header>
   <mat-card-content class="card-body">
+    @if (isEditing() || note()) {
+      <mat-expansion-panel class="note-panel" hideToggle="false">
+        <mat-expansion-panel-header>
+          <mat-panel-title>Note</mat-panel-title>
+          <mat-panel-description class="note-preview">
+            {{ note() || 'Tap to add a note' }}
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        @if (isEditing()) {
+          <mat-form-field appearance="outline" class="note-field">
+            <mat-label>Note</mat-label>
+            <textarea
+              matInput
+              rows="2"
+              [value]="note()"
+              (input)="onNoteInput($event)"
+              placeholder="How did it feel? Any tweaks?"
+              autocomplete="off"
+            ></textarea>
+          </mat-form-field>
+        } @else {
+          <p class="note-display">{{ note() }}</p>
+        }
+      </mat-expansion-panel>
+    }
+
     @for (ex of exercises(); track $index) {
       <app-exercise
         [exercise]="ex"
