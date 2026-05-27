@@ -1,0 +1,553 @@
+{
+  "version": 1,
+  "exportedAt": "2026-05-26T18:00:00.000Z",
+  "workouts": [
+    {
+      "id": "a1b2c3d4-0001-4abc-9000-000000000412",
+      "date": "2026-04-12T00:00:00.000Z",
+      "note": "Reps not recorded for many sets; using 8 as a placeholder. RDLs listed but no sets logged.",
+      "exercises": [
+        {
+          "name": "Squats no cable big bar",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Squats cable",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" },
+            { "reps": 5, "weight": 90, "weightUnit": "lb" },
+            { "reps": 7, "weight": 90, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Rear Deltoid machine",
+          "sets": [
+            { "reps": 8, "weight": 30, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 8, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Chest Press machine",
+          "sets": [
+            { "reps": 8, "weight": 65, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Seated leg press",
+          "sets": [
+            { "reps": 8, "weight": 155, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over rows dumbbell",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over row barbell",
+          "sets": [
+            { "reps": 8, "weight": 100, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 8, "weight": 15, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Pull up machine middle grip",
+          "sets": [
+            { "reps": 8, "weight": 65, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bench press dumbbells",
+          "sets": [
+            { "reps": 8, "weight": 25, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Squat big bar (on cable)",
+          "sets": [
+            { "reps": 8, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Low row machine",
+          "sets": [
+            { "reps": 8, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Dumbbell curls standing",
+          "sets": [
+            { "reps": 8, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Dumbbell RDLs",
+          "sets": [
+            { "reps": 8, "weight": 45, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Barbell RDL",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0002-4abc-9000-000000000407",
+      "date": "2026-04-07T00:00:00.000Z",
+      "note": "Started with weighted stair climber, chill. Reps not recorded for several earlier sets; using 8 as a placeholder.",
+      "exercises": [
+        {
+          "name": "Squats no cable big bar",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Rear Deltoid machine",
+          "sets": [
+            { "reps": 8, "weight": 30, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 8, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Chest Press machine",
+          "sets": [
+            { "reps": 8, "weight": 65, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Seated leg press",
+          "sets": [
+            { "reps": 8, "weight": 155, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over rows dumbbell",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over row barbell",
+          "sets": [
+            { "reps": 8, "weight": 100, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 8, "weight": 15, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Pull up machine middle grip",
+          "sets": [
+            { "reps": 8, "weight": 70, "weightUnit": "lb" },
+            { "reps": 6, "weight": 65, "weightUnit": "lb" },
+            { "reps": 3, "weight": 60, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Dumbbell curls standing",
+          "sets": [
+            { "reps": 10, "weight": 10, "weightUnit": "lb" },
+            { "reps": 7, "weight": 15, "weightUnit": "lb" },
+            { "reps": 5, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Dumbbell RDLs",
+          "sets": [
+            { "reps": 10, "weight": 30, "weightUnit": "lb" },
+            { "reps": 10, "weight": 40, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0003-4abc-9000-000000000406",
+      "date": "2026-04-06T00:00:00.000Z",
+      "note": "Chest press angle felt BAD (only tried a couple). Low row felt strained.",
+      "exercises": [
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 5, "weight": 100, "weightUnit": "lb" },
+            { "reps": 5, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Chest Press machine",
+          "sets": [
+            { "reps": 2, "weight": 65, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over rows dumbbell",
+          "sets": [
+            { "reps": 8, "weight": 60, "weightUnit": "lb" },
+            { "reps": 6, "weight": 70, "weightUnit": "lb" },
+            { "reps": 9, "weight": 70, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 4, "weight": 20, "weightUnit": "lb" },
+            { "reps": 6, "weight": 15, "weightUnit": "lb" },
+            { "reps": 7, "weight": 15, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bench press dumbbells",
+          "sets": [
+            { "reps": 6, "weight": 20, "weightUnit": "lb" },
+            { "reps": 8, "weight": 20, "weightUnit": "lb" },
+            { "reps": 6, "weight": 25, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Low row machine",
+          "sets": [
+            { "reps": 5, "weight": 85, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0004-4abc-9000-000000000317",
+      "date": "2026-03-17T00:00:00.000Z",
+      "note": "Reps not recorded for several later sets; using 8 as a placeholder.",
+      "exercises": [
+        {
+          "name": "Squats no cable big bar",
+          "sets": [
+            { "reps": 8, "weight": 80, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Rear Deltoid machine",
+          "sets": [
+            { "reps": 8, "weight": 30, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 7, "weight": 85, "weightUnit": "lb" },
+            { "reps": 5, "weight": 100, "weightUnit": "lb" },
+            { "reps": 4, "weight": 100, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Chest Press machine",
+          "sets": [
+            { "reps": 8, "weight": 60, "weightUnit": "lb" },
+            { "reps": 6, "weight": 65, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Seated leg press",
+          "sets": [
+            { "reps": 7, "weight": 150, "weightUnit": "lb" },
+            { "reps": 5, "weight": 155, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over rows dumbbell",
+          "sets": [
+            { "reps": 8, "weight": 60, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over row barbell",
+          "sets": [
+            { "reps": 8, "weight": 100, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 8, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Pull up machine middle grip",
+          "sets": [
+            { "reps": 8, "weight": 70, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bench press dumbbells",
+          "sets": [
+            { "reps": 8, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Squat big bar (on cable)",
+          "sets": [
+            { "reps": 8, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Low row machine",
+          "sets": [
+            { "reps": 8, "weight": 85, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0005-4abc-9000-000000000314",
+      "date": "2026-03-14T00:00:00.000Z",
+      "note": "Squat third set: about half the reps weren't quite deep enough.",
+      "exercises": [
+        {
+          "name": "Assisted pull up machine",
+          "sets": [
+            { "reps": 10, "weight": 75, "weightUnit": "lb" },
+            { "reps": 5, "weight": 70, "weightUnit": "lb" },
+            { "reps": 8, "weight": 75, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Squat rack regular bar",
+          "sets": [
+            { "reps": 7, "weight": 65, "weightUnit": "lb" },
+            { "reps": 5, "weight": 75, "weightUnit": "lb" },
+            { "reps": 6, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Rear Deltoid machine",
+          "sets": [
+            { "reps": 9, "weight": 20, "weightUnit": "lb" },
+            { "reps": 6, "weight": 25, "weightUnit": "lb" },
+            { "reps": 9, "weight": 30, "weightUnit": "lb" },
+            { "reps": 8, "weight": 35, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0006-4abc-9000-000000000313",
+      "date": "2026-03-13T00:00:00.000Z",
+      "note": "OHP 2nd set: left arm noticeably weaker (4x vs 7x at 20). Lat pulldown @100 was about 3.5 reps; logged as 3.",
+      "exercises": [
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 7, "weight": 85, "weightUnit": "lb" },
+            { "reps": 8, "weight": 85, "weightUnit": "lb" },
+            { "reps": 3, "weight": 100, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Low row machine",
+          "sets": [
+            { "reps": 9, "weight": 55, "weightUnit": "lb" },
+            { "reps": 8, "weight": 70, "weightUnit": "lb" },
+            { "reps": 6, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 10, "weight": 15, "weightUnit": "lb" },
+            { "reps": 7, "weight": 20, "weightUnit": "lb" },
+            { "reps": 4, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bench press dumbbells",
+          "sets": [
+            { "reps": 9, "weight": 20, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0007-4abc-9000-000000000304",
+      "date": "2026-03-04T00:00:00.000Z",
+      "exercises": [
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 10, "weight": 10, "weightUnit": "lb" },
+            { "reps": 7, "weight": 15, "weightUnit": "lb" },
+            { "reps": 4, "weight": 20, "weightUnit": "lb" },
+            { "reps": 4, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Pull up machine middle grip",
+          "sets": [
+            { "reps": 8, "weight": 70, "weightUnit": "lb" },
+            { "reps": 7, "weight": 75, "weightUnit": "lb" },
+            { "reps": 5, "weight": 80, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0008-4abc-9000-000000000209",
+      "date": "2026-02-09T00:00:00.000Z",
+      "note": "Pinch behind left shoulder blade on bench press at 15+ lb dumbbells; less bad if hands didn't drop all the way. Left thumb tingly after 20s.",
+      "exercises": [
+        {
+          "name": "Pull up machine middle grip",
+          "sets": [
+            { "reps": 11, "weight": 90, "weightUnit": "lb" },
+            { "reps": 6, "weight": 70, "weightUnit": "lb" },
+            { "reps": 5, "weight": 70, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bench press dumbbells",
+          "sets": [
+            { "reps": 11, "weight": 10, "weightUnit": "lb" },
+            { "reps": 10, "weight": 15, "weightUnit": "lb" },
+            { "reps": 5, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Squat big bar (on cable)",
+          "sets": [
+            { "reps": 7, "weight": 65, "weightUnit": "lb" },
+            { "reps": 9, "weight": 65, "weightUnit": "lb" },
+            { "reps": 7, "weight": 75, "weightUnit": "lb" },
+            { "reps": 5, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Low row machine",
+          "sets": [
+            { "reps": 8, "weight": 40, "weightUnit": "lb" },
+            { "reps": 10, "weight": 55, "weightUnit": "lb" },
+            { "reps": 6, "weight": 70, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0009-4abc-9000-000000000203",
+      "date": "2026-02-03T00:00:00.000Z",
+      "exercises": [
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 5, "weight": 85, "weightUnit": "lb" },
+            { "reps": 7, "weight": 85, "weightUnit": "lb" },
+            { "reps": 6, "weight": 85, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 10, "weight": 10, "weightUnit": "lb" },
+            { "reps": 8, "weight": 15, "weightUnit": "lb" },
+            { "reps": 8, "weight": 15, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0010-4abc-9000-000000000117",
+      "date": "2026-01-17T00:00:00.000Z",
+      "exercises": [
+        {
+          "name": "Lat pull downs cable",
+          "sets": [
+            { "reps": 8, "weight": 55, "weightUnit": "lb" },
+            { "reps": 9, "weight": 70, "weightUnit": "lb" },
+            { "reps": 3, "weight": 85, "weightUnit": "lb" },
+            { "reps": 7, "weight": 70, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Squat big bar",
+          "sets": [
+            { "reps": 6, "weight": 65, "weightUnit": "lb" },
+            { "reps": 8, "weight": 65, "weightUnit": "lb" },
+            { "reps": 7, "weight": 75, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "a1b2c3d4-0011-4abc-9000-000000000114",
+      "date": "2026-01-14T00:00:00.000Z",
+      "note": "Pull up: shoulders clicking on wide grip @90. OHP 2nd set at 15 lb failed on rep 7 (logged 6 successful reps). Seated rows: forgot to count first set, estimated 10.",
+      "exercises": [
+        {
+          "name": "Assisted pull up machine",
+          "sets": [
+            { "reps": 6, "weight": 70, "weightUnit": "lb" },
+            { "reps": 6, "weight": 90, "weightUnit": "lb" },
+            { "reps": 8, "weight": 90, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Overhead press dumbbells",
+          "sets": [
+            { "reps": 12, "weight": 10, "weightUnit": "lb" },
+            { "reps": 6, "weight": 15, "weightUnit": "lb" },
+            { "reps": 6, "weight": 15, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Bent over row dumbbells both hands",
+          "sets": [
+            { "reps": 10, "weight": 10, "weightUnit": "lb" },
+            { "reps": 10, "weight": 15, "weightUnit": "lb" },
+            { "reps": 10, "weight": 20, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Seated leg press",
+          "sets": [
+            { "reps": 9, "weight": 110, "weightUnit": "lb" },
+            { "reps": 7, "weight": 130, "weightUnit": "lb" },
+            { "reps": 6, "weight": 130, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Dumbbell RDLs",
+          "sets": [
+            { "reps": 7, "weight": 25, "weightUnit": "lb" },
+            { "reps": 10, "weight": 35, "weightUnit": "lb" },
+            { "reps": 7, "weight": 40, "weightUnit": "lb" }
+          ]
+        },
+        {
+          "name": "Seated rows (underhand grip)",
+          "sets": [
+            { "reps": 10, "weight": 55, "weightUnit": "lb" },
+            { "reps": 7, "weight": 55, "weightUnit": "lb" }
+          ]
+        }
+      ]
+    }
+  ]
+}
