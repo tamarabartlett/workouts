@@ -1,0 +1,109 @@
+<main class="home-main">
+  @if (statusMessage(); as msg) {
+    <div
+      class="status-banner"
+      [class.status-banner--error]="statusKind() === 'error'"
+      role="status"
+    >
+      <span class="status-banner__message">{{ msg }}</span>
+      <button
+        matIconButton
+        type="button"
+        class="status-banner__dismiss"
+        (click)="dismissStatus.emit()"
+        aria-label="Dismiss notification"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+
+  @switch (mainView()) {
+    @case ('new') {
+      <app-new-workout-form
+        [nextWorkoutDefaults]="nextWorkoutDefaults()"
+        (save)="save.emit($event)"
+        (cancel)="cancel.emit()"
+      />
+    }
+    @case ('edit') {
+      @if (selectedWorkout(); as w) {
+        <app-workout-day-card
+          [date]="parseWorkoutDate(w.date)"
+          [exercises]="w.exercises"
+          [note]="w.note ?? ''"
+          (patchSet)="patchSet.emit($event)"
+          (noteChange)="noteChange.emit($event)"
+        />
+      } @else {
+        <p class="empty-hint">
+          That workout is no longer available. Pick another from the list.
+        </p>
+      }
+    }
+    @default {
+      @if (workouts().length === 0) {
+        <div class="welcome-state">
+          <h1 class="welcome">Welcome Workouteer</h1>
+          <p class="empty-hint">
+            No workouts yet. Start one with <strong>New</strong>, or use
+            <strong>Import</strong> to load a
+            <code>workoutHistory.json</code> file.
+          </p>
+          <button
+            matButton="filled"
+            type="button"
+            class="welcome-cta"
+            (click)="startNewWorkout.emit()"
+          >
+            <mat-icon>add</mat-icon>
+            New workout
+          </button>
+        </div>
+      } @else {
+        <section class="next-workout" aria-labelledby="next-workout-title">
+          <header class="next-workout__header">
+            <h1 id="next-workout-title" class="next-workout__title">
+              Next workout
+            </h1>
+            <p class="next-workout__hint">
+              Last weight lifted for each exercise.
+            </p>
+          </header>
+
+          @if (lastExerciseSessions().length === 0) {
+            <p class="empty-hint">
+              No exercise history yet. Pick a workout from the list, or start a
+              new one.
+            </p>
+          } @else {
+            <ul class="next-workout__list">
+              @for (entry of lastExerciseSessions(); track entry.name) {
+                <li class="next-workout__item">
+                  <span class="next-workout__name">{{ entry.name }}</span>
+                  <span class="next-workout__weight">
+                    {{ entry.weight }} {{ entry.weightUnit }}
+                    <span class="next-workout__reps">× {{ entry.reps }}</span>
+                  </span>
+                  <span class="next-workout__date">
+                    {{ parseWorkoutDate(entry.date) | date: 'mediumDate' }}
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+
+          <button
+            matButton="filled"
+            type="button"
+            class="next-workout__cta"
+            (click)="startNewWorkout.emit()"
+          >
+            <mat-icon>add</mat-icon>
+            New workout
+          </button>
+        </section>
+      }
+    }
+  }
+</main>

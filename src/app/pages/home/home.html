@@ -50,157 +50,27 @@
       (openedChange)="onSidenavOpenedChange($event)"
       [disableClose]="isWideScreen()"
     >
-      <div class="sidenav-header">
-        <h2 class="sidenav-title">Past workouts</h2>
-        <button
-          matButton="filled"
-          type="button"
-          class="new-button"
-          (click)="startNewWorkout()"
-        >
-          <mat-icon>add</mat-icon>
-          New
-        </button>
-      </div>
-
-      @if (workouts().length === 0) {
-        <p class="sidenav-empty">
-          No workouts yet. Tap <strong>New</strong> to add one, or use
-          <strong>Import</strong> to load a history file.
-        </p>
-      } @else {
-        <nav class="workout-nav" aria-label="Past workouts">
-          @for (w of workouts(); track w.id) {
-            <button
-              type="button"
-              class="workout-nav-item"
-              [class.workout-nav-item--active]="selectedWorkoutId() === w.id && mainView() === 'edit'"
-              (click)="selectWorkout(w.id)"
-            >
-              <span class="item-date">
-                {{ parseWorkoutDate(w.date) | date: 'mediumDate' }}
-              </span>
-              <span class="item-meta">{{ summarize(w) }}</span>
-              @if (w.note) {
-                <span class="item-note">{{ w.note }}</span>
-              }
-            </button>
-          }
-        </nav>
-      }
+      <app-past-workouts
+        [selectedWorkoutId]="selectedWorkoutId()"
+        [mainView]="mainView()"
+        (startNewWorkout)="startNewWorkout()"
+        (selectWorkout)="selectWorkout($event)"
+      />
     </mat-sidenav>
 
     <mat-sidenav-content class="main-pane">
-      <main class="home-main">
-        @if (statusMessage(); as msg) {
-          <div
-            class="status-banner"
-            [class.status-banner--error]="statusKind() === 'error'"
-            role="status"
-          >
-            <span class="status-banner__message">{{ msg }}</span>
-            <button
-              matIconButton
-              type="button"
-              class="status-banner__dismiss"
-              (click)="dismissStatus()"
-              aria-label="Dismiss notification"
-            >
-              <mat-icon>close</mat-icon>
-            </button>
-          </div>
-        }
-
-        @switch (mainView()) {
-          @case ('new') {
-            <app-new-workout-form
-              (save)="onNewWorkoutSaved($event)"
-              (cancel)="onNewWorkoutCancelled()"
-            />
-          }
-          @case ('edit') {
-            @if (selectedWorkout(); as w) {
-              <app-workout-day-card
-                [date]="parseWorkoutDate(w.date)"
-                [exercises]="w.exercises"
-                [note]="w.note ?? ''"
-                (patchSet)="onSetPatched(w.id, $event)"
-                (noteChange)="onNoteChanged(w.id, $event)"
-              />
-            } @else {
-              <p class="empty-hint">
-                That workout is no longer available. Pick another from the list.
-              </p>
-            }
-          }
-          @default {
-            @if (workouts().length === 0) {
-              <div class="welcome-state">
-                <h1 class="welcome">Welcome Workouteer</h1>
-                <p class="empty-hint">
-                  No workouts yet. Start one with <strong>New</strong>, or use
-                  <strong>Import</strong> to load a
-                  <code>workoutHistory.json</code> file.
-                </p>
-                <button
-                  matButton="filled"
-                  type="button"
-                  class="welcome-cta"
-                  (click)="startNewWorkout()"
-                >
-                  <mat-icon>add</mat-icon>
-                  New workout
-                </button>
-              </div>
-            } @else {
-              <section class="next-workout" aria-labelledby="next-workout-title">
-                <header class="next-workout__header">
-                  <h1 id="next-workout-title" class="next-workout__title">
-                    Next workout
-                  </h1>
-                  <p class="next-workout__hint">
-                    Last weight lifted for each exercise.
-                  </p>
-                </header>
-
-                @if (lastExerciseSessions().length === 0) {
-                  <p class="empty-hint">
-                    No exercise history yet. Pick a workout from the list, or
-                    start a new one.
-                  </p>
-                } @else {
-                  <ul class="next-workout__list">
-                    @for (entry of lastExerciseSessions(); track entry.name) {
-                      <li class="next-workout__item">
-                        <span class="next-workout__name">{{ entry.name }}</span>
-                        <span class="next-workout__weight">
-                          {{ entry.weight }} {{ entry.weightUnit }}
-                          <span class="next-workout__reps">
-                            × {{ entry.reps }}
-                          </span>
-                        </span>
-                        <span class="next-workout__date">
-                          {{ parseWorkoutDate(entry.date) | date: 'mediumDate' }}
-                        </span>
-                      </li>
-                    }
-                  </ul>
-                }
-
-                <button
-                  matButton="filled"
-                  type="button"
-                  class="next-workout__cta"
-                  (click)="startNewWorkout()"
-                >
-                  <mat-icon>add</mat-icon>
-                  New workout
-                </button>
-              </section>
-            }
-          }
-        }
-      </main>
+      <app-home-main
+        [mainView]="mainView()"
+        [selectedWorkout]="selectedWorkout()"
+        [statusMessage]="statusMessage()"
+        [statusKind]="statusKind()"
+        (dismissStatus)="dismissStatus()"
+        (save)="onNewWorkoutSaved($event)"
+        (cancel)="onNewWorkoutCancelled()"
+        (patchSet)="onSelectedWorkoutSetPatched($event)"
+        (noteChange)="onSelectedWorkoutNoteChanged($event)"
+        (startNewWorkout)="startNewWorkout()"
+      />
     </mat-sidenav-content>
   </mat-sidenav-container>
 </div>

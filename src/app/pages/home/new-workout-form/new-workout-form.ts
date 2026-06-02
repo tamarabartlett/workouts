@@ -4,6 +4,8 @@ import {
   Component,
   computed,
   inject,
+  input,
+  OnInit,
   output,
   signal,
 } from '@angular/core';
@@ -16,7 +18,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { WorkoutStoreService } from '../../../core/workout-store.service';
-import type { Exercise, Workout } from '../workout.types';
+import type { Exercise, NextWorkoutDefaults, Workout } from '../workout.types';
 
 /** Sentinel value for the "write in a different exercise" dropdown option. */
 const OTHER_VALUE = '__other__';
@@ -47,9 +49,15 @@ interface DraftExercise {
   templateUrl: './new-workout-form.html',
   styleUrl: './new-workout-form.scss',
 })
-export class NewWorkoutFormComponent {
+export class NewWorkoutFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(WorkoutStoreService);
+
+  /**
+   * Last reps/weight/unit per exercise (from {@link WorkoutStoreService.lastExerciseSessions}).
+   * Passed from the parent so the form pre-fills when the user picks an exercise.
+   */
+  readonly nextWorkoutDefaults = input.required<ReadonlyMap<string, NextWorkoutDefaults>>();
 
   /** Emitted when the user saves a complete workout. */
   readonly save = output<Workout>();
@@ -84,31 +92,44 @@ export class NewWorkoutFormComponent {
   protected readonly isOther = signal(false);
 
   constructor() {
-    // Default-select the most recently used exercise so the common case is
-    // one tap away.
-    const first = this.knownNames()[0];
-    if (first) {
-      this.addExerciseForm.patchValue({ selectedName: first });
-    } else {
-      this.addExerciseForm.patchValue({ selectedName: OTHER_VALUE });
-      this.isOther.set(true);
-    }
-
-    // Keep `isOther` and the customName validator in sync with the dropdown.
     this.addExerciseForm.controls.selectedName.valueChanges
       .pipe(takeUntilDestroyed())
-      .subscribe((val) => {
-        const other = val === OTHER_VALUE;
-        this.isOther.set(other);
-        const customCtrl = this.addExerciseForm.controls.customName;
-        if (other) {
-          customCtrl.setValidators([Validators.required]);
-        } else {
-          customCtrl.clearValidators();
-          customCtrl.setValue('');
-        }
-        customCtrl.updateValueAndValidity({ emitEvent: false });
-      });
+      .subscribe((val) => this.onSelectedNameChange(val));
+  }
+
+  ngOnInit(): void {
+    // Inputs are available here; default-select the most recently used exercise.
+    const first = this.knownNames()[0] ?? OTHER_VALUE;
+    this.addExerciseForm.patchValue({ selectedName: first });
+    this.onSelectedNameChange(first);
+  }
+
+  /**
+   * Reacts to the exercise dropdown changing: keeps `isOther` and the
+   * customName validator in sync, and prefills reps/weight/unit from the
+   * last time the user did the selected exercise so they only have to
+   * adjust deltas (or confirm) before adding it to the draft.
+   */
+  private onSelectedNameChange(val: string): void {
+    const other = val === OTHER_VALUE;
+    this.isOther.set(other);
+
+    const customCtrl = this.addExerciseForm.controls.customName;
+    if (other) {
+      customCtrl.setValidators([Validators.required]);
+    } else {
+      customCtrl.clearValidators();
+      customCtrl.setValue('');
+    }
+    customCtrl.updateValueAndValidity({ emitEvent: false });
+
+    if (other) return;
+    const last = this.nextWorkoutDefaults().get(val);
+    if (!last) return;
+    this.addExerciseForm.patchValue(
+      { reps: last.reps, weight: last.weight, weightUnit: last.weightUnit },
+      { emitEvent: false },
+    );
   }
 
   protected addExercise(): void {
@@ -135,13 +156,15 @@ export class NewWorkoutFormComponent {
 
     // Reset for the next add, keeping the previously chosen unit so users
     // adding multiple lb (or kg) exercises don't have to re-pick each time.
+    const nextSelected = this.knownNames()[0] ?? OTHER_VALUE;
     this.addExerciseForm.reset({
-      selectedName: this.knownNames()[0] ?? OTHER_VALUE,
+      selectedName: nextSelected,
       customName: '',
       reps: 5,
       weight: 0,
       weightUnit,
     });
+    this.onSelectedNameChange(nextSelected);
   }
 
   protected removeDraft(index: number): void {

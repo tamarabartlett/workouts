@@ -1,0 +1,38 @@
+<div class="sidenav-header">
+  <h2 class="sidenav-title">Past workouts</h2>
+  <button
+    matButton="filled"
+    type="button"
+    class="new-button"
+    (click)="startNewWorkout.emit()"
+  >
+    <mat-icon>add</mat-icon>
+    New
+  </button>
+</div>
+
+@if (workouts().length === 0) {
+  <p class="sidenav-empty">
+    No workouts yet. Tap <strong>New</strong> to add one, or use
+    <strong>Import</strong> to load a history file.
+  </p>
+} @else {
+  <nav class="workout-nav" aria-label="Past workouts">
+    @for (w of workouts(); track w.id) {
+      <button
+        type="button"
+        class="workout-nav-item"
+        [class.workout-nav-item--active]="selectedWorkoutId() === w.id && mainView() === 'edit'"
+        (click)="selectWorkout.emit(w.id)"
+      >
+        <span class="item-date">
+          {{ parseWorkoutDate(w.date) | date: 'mediumDate' }}
+        </span>
+        <span class="item-meta">{{ summarize(w) }}</span>
+        @if (w.note) {
+          <span class="item-note">{{ w.note }}</span>
+        }
+      </button>
+    }
+  </nav>
+}

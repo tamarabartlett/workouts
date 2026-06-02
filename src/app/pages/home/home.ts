@@ -14,16 +14,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { DatePipe } from '@angular/common';
 import { map } from 'rxjs/operators';
 import { AuthService } from '../../core/auth.service';
 import {
   WORKOUT_HISTORY_FILENAME,
   WorkoutStoreService,
 } from '../../core/workout-store.service';
-import { NewWorkoutFormComponent } from './new-workout-form/new-workout-form';
+import { HomeMainComponent } from './home-main/home-main';
+import { PastWorkoutsComponent } from './past-workouts/past-workouts';
 import type { Workout, WorkoutSetPatchEvent } from './workout.types';
-import { WorkoutDayCardComponent } from './workout-day-card/workout-day-card';
 
 /**
  * Min width at which the workouts sidenav stays pinned open as a permanent
@@ -40,9 +39,8 @@ type MainView = 'welcome' | 'new' | 'edit';
     MatButtonModule,
     MatIconModule,
     MatSidenavModule,
-    DatePipe,
-    WorkoutDayCardComponent,
-    NewWorkoutFormComponent,
+    HomeMainComponent,
+    PastWorkoutsComponent,
   ],
   templateUrl: './home.html',
   styleUrl: './home.scss',
@@ -54,7 +52,6 @@ export class HomePage {
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   protected readonly workouts = this.store.workouts;
-  protected readonly lastExerciseSessions = this.store.lastExerciseSessions;
   protected readonly statusMessage = signal<string | null>(null);
   protected readonly statusKind = signal<'info' | 'error'>('info');
 
@@ -91,10 +88,6 @@ export class HomePage {
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
 
-  protected parseWorkoutDate(iso: string): Date {
-    return new Date(iso);
-  }
-
   protected toggleSidenav(): void {
     this.sidenavOpened.update((v) => !v);
   }
@@ -127,13 +120,6 @@ export class HomePage {
     this.closeSidenavIfOverlay();
   }
 
-  /** Compact summary shown next to each workout item in the sidenav. */
-  protected summarize(w: Workout): string {
-    const exerciseCount = w.exercises.length;
-    const setCount = w.exercises.reduce((n, ex) => n + ex.sets.length, 0);
-    return `${exerciseCount} exercise${exerciseCount === 1 ? '' : 's'} · ${setCount} set${setCount === 1 ? '' : 's'}`;
-  }
-
   protected onSetPatched(workoutId: string, ev: WorkoutSetPatchEvent): void {
     const current = this.workouts().find((w) => w.id === workoutId);
     if (!current) return;
@@ -154,6 +140,18 @@ export class HomePage {
 
   protected onNoteChanged(workoutId: string, note: string): void {
     this.store.patchNote(workoutId, note);
+  }
+
+  protected onSelectedWorkoutSetPatched(ev: WorkoutSetPatchEvent): void {
+    const id = this.selectedWorkoutId();
+    if (!id) return;
+    this.onSetPatched(id, ev);
+  }
+
+  protected onSelectedWorkoutNoteChanged(note: string): void {
+    const id = this.selectedWorkoutId();
+    if (!id) return;
+    this.onNoteChanged(id, note);
   }
 
   protected onNewWorkoutSaved(workout: Workout): void {
