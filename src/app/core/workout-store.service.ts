@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import type {
   Exercise,
   LastExerciseSession,
@@ -7,6 +7,9 @@ import type {
   WorkoutHistoryFile,
   WorkoutSet,
 } from '../pages/home/workout.types';
+import type { ImportResolution } from './import-merge';
+import { mergeImportedWorkouts } from './import-merge';
+import { WorkoutApiService } from './workout-api.service';
 
 /**
  * Current `workoutHistory.json` schema version. Bump if the on-disk shape
@@ -17,27 +20,27 @@ export const WORKOUT_HISTORY_VERSION = 1;
 /** Filename suggested when exporting. */
 export const WORKOUT_HISTORY_FILENAME = 'workoutHistory.json';
 
-const STORAGE_KEY = 'workouts_history_v1';
-const CUSTOM_NAMES_STORAGE_KEY = 'workouts_custom_exercise_names_v1';
+const LEGACY_STORAGE_KEY = 'workouts_history_v1';
+const LEGACY_CUSTOM_NAMES_KEY = 'workouts_custom_exercise_names_v1';
 
 @Injectable({ providedIn: 'root' })
 export class WorkoutStoreService {
+  private readonly api = inject(WorkoutApiService);
+
   private readonly _workouts = signal<Workout[]>([]);
   readonly workouts = this._workouts.asReadonly();
+
+  private readonly _customExerciseNames = signal<string[]>([]);
+
+  /** False until the first load from MongoDB completes (or fails). */
+  readonly ready = signal(false);
+  readonly loadError = signal<string | null>(null);
+  readonly saveError = signal<string | null>(null);
 
   /**
    * Exercise names entered by the user via "Other" that have not yet been
    * saved into a workout. Persisted so the dropdown remembers them.
    * Stored most-recently-added first.
-   */
-  private readonly _customExerciseNames = signal<string[]>([]);
-
-  /**
-   * Distinct exercise names known to the app, sorted by most recently used.
-   * "Used" means the most recent workout date the name appears in; custom
-   * names that have never been saved into a workout sort above all of those
-   * (they were just typed in, so they are the most recent thing the user
-   * touched).
    */
   readonly exerciseNames = computed<string[]>(() => {
     const lastUsed = new Map<string, number>();
@@ -56,13 +59,6 @@ export class WorkoutStoreService {
     return [...unused, ...fromWorkouts];
   });
 
-  /**
-   * The most recent set performed for each exercise, paired with the
-   * workout date it was performed in. Sorted by date descending so the
-   * exercises the user touched most recently appear first. Drives both the
-   * "Next workout" view on the home screen and the per-name defaults map
-   * below.
-   */
   readonly lastExerciseSessions = computed<LastExerciseSession[]>(() => {
     const byName = new Map<string, { t: number; entry: LastExerciseSession }>();
     for (const w of this._workouts()) {
@@ -90,13 +86,6 @@ export class WorkoutStoreService {
       .map((v) => v.entry);
   });
 
-  /**
-   * Suggested defaults for the next workout, keyed by exercise name. The
-   * suggestion is taken from the last set of the most recent workout that
-   * included the exercise, so the user sees the weight/reps they finished
-   * with last time. Names with no history (e.g. custom names typed via
-   * "Other" that haven't been saved into a workout) are absent.
-   */
   readonly nextWorkoutDefaults = computed<ReadonlyMap<string, NextWorkoutDefaults>>(
     () => {
       const result = new Map<string, NextWorkoutDefaults>();
@@ -111,9 +100,45 @@ export class WorkoutStoreService {
     },
   );
 
-  constructor() {
-    this.loadFromStorage();
-    this.loadCustomNamesFromStorage();
+  private loadPromise: Promise<void> | null = null;
+
+  /** Load workouts from MongoDB (call after the user is authenticated). */
+  ensureLoaded(): Promise<void> {
+    if (!this.loadPromise) {
+      this.loadPromise = this.initFromApi();
+    }
+    return this.loadPromise;
+  }
+
+  /** Load workouts from MongoDB; migrate legacy localStorage once if needed. */
+  private async initFromApi(): Promise<void> {
+    try {
+      const data = await this.api.fetchWorkouts();
+      let workouts = sortByDateDesc(
+        data.workouts.map((w) => normalizeWorkoutFromApi(w)),
+      );
+      let customNames = data.customExerciseNames;
+
+      if (workouts.length === 0) {
+        const legacy = this.readLegacyLocalStorage();
+        if (legacy) {
+          workouts = legacy.workouts;
+          customNames = legacy.customExerciseNames;
+          await this.api.saveWorkouts(workouts, customNames);
+          this.clearLegacyLocalStorage();
+        }
+      }
+
+      this._workouts.set(workouts);
+      this._customExerciseNames.set(customNames);
+      this.loadError.set(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not load workouts.';
+      this.loadError.set(message);
+    } finally {
+      this.ready.set(true);
+    }
   }
 
   /** Replace the exercises array for an existing workout (used by the edit UI). */
@@ -121,58 +146,56 @@ export class WorkoutStoreService {
     this._workouts.update((list) =>
       list.map((w) => (w.id === id ? { ...w, exercises } : w)),
     );
-    this.persist();
+    void this.persist();
   }
 
-  /**
-   * Replace the free-form note on an existing workout. Empty/whitespace input
-   * clears the note field entirely so we don't persist meaningless strings.
-   */
   patchNote(id: string, note: string): void {
     const trimmed = note.trim();
     this._workouts.update((list) =>
       list.map((w) => {
         if (w.id !== id) return w;
         if (trimmed) return { ...w, note: trimmed };
-        // Drop the property when blank instead of storing "".
         const { note: _omit, ...rest } = w;
         return rest;
       }),
     );
-    this.persist();
+    void this.persist();
   }
 
-  /** Insert a brand-new workout (used by the New Workout flow). */
   addWorkout(workout: Workout): void {
     this._workouts.update((list) => sortByDateDesc([workout, ...list]));
-    // Any custom name now lives inside a real workout, so drop it from the
-    // "pending" custom-names list to keep persistence tidy.
     const names = new Set(workout.exercises.map((e) => e.name));
     this._customExerciseNames.update((list) => list.filter((n) => !names.has(n)));
-    this.persist();
-    this.persistCustomNames();
+    void this.persist();
   }
 
-  /**
-   * Remember an exercise name the user typed via "Other" so it shows up in
-   * the dropdown next time, even if they cancel the dialog. No-op for names
-   * already present in the history or the custom list.
-   */
   rememberCustomExerciseName(rawName: string): void {
     const name = rawName.trim();
     if (!name) return;
     if (this.exerciseNames().includes(name)) return;
     this._customExerciseNames.update((list) => [name, ...list]);
-    this.persistCustomNames();
+    void this.persistCustomNamesOnly();
   }
 
-  /** Replace the entire in-memory history (used by Import). */
-  replaceAll(workouts: Workout[]): void {
+  /**
+   * Replace history after import. When `resolutions` is empty, imported
+   * workouts are merged without overwriting existing dates.
+   */
+  async applyImport(
+    imported: Workout[],
+    resolutions: Record<string, ImportResolution> = {},
+  ): Promise<void> {
+    const merged = mergeImportedWorkouts(this._workouts(), imported, resolutions);
+    this._workouts.set(sortByDateDesc(merged));
+    await this.persist();
+  }
+
+  /** Replace the entire in-memory history (used when import has no conflicts). */
+  async replaceAll(workouts: Workout[]): Promise<void> {
     this._workouts.set(sortByDateDesc(workouts));
-    this.persist();
+    await this.persist();
   }
 
-  /** Snapshot of the full history in the canonical `workoutHistory.json` shape. */
   toHistoryFile(): WorkoutHistoryFile {
     return {
       version: WORKOUT_HISTORY_VERSION,
@@ -181,12 +204,6 @@ export class WorkoutStoreService {
     };
   }
 
-  /**
-   * Parse and validate raw text from an uploaded file. Accepts either the
-   * canonical `{ version, exportedAt, workouts }` envelope or a bare
-   * `Workout[]` array, so that hand-edited or migrated files import cleanly.
-   * Throws `Error` with a user-readable message on failure.
-   */
   parseHistoryText(text: string): Workout[] {
     let raw: unknown;
     try {
@@ -197,53 +214,62 @@ export class WorkoutStoreService {
     return normalizeHistory(raw);
   }
 
-  private persist(): void {
-    if (typeof localStorage === 'undefined') return;
+  private async persist(): Promise<void> {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.toHistoryFile()));
-    } catch {
-      // quota / privacy mode — ignore; the user can still export manually.
+      await this.api.saveWorkouts(this._workouts(), this._customExerciseNames());
+      this.saveError.set(null);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not save workouts.';
+      this.saveError.set(message);
     }
   }
 
-  private loadFromStorage(): void {
-    if (typeof localStorage === 'undefined') return;
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
+  private async persistCustomNamesOnly(): Promise<void> {
+    await this.persist();
+  }
+
+  private readLegacyLocalStorage(): {
+    workouts: Workout[];
+    customExerciseNames: string[];
+  } | null {
+    if (typeof localStorage === 'undefined') return null;
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    if (!raw) return null;
     try {
-      this._workouts.set(sortByDateDesc(normalizeHistory(JSON.parse(raw))));
+      const workouts = sortByDateDesc(normalizeHistory(JSON.parse(raw)));
+      let customExerciseNames: string[] = [];
+      const namesRaw = localStorage.getItem(LEGACY_CUSTOM_NAMES_KEY);
+      if (namesRaw) {
+        const parsed: unknown = JSON.parse(namesRaw);
+        if (Array.isArray(parsed)) {
+          customExerciseNames = parsed
+            .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
+            .map((v) => v.trim());
+        }
+      }
+      return { workouts, customExerciseNames };
     } catch {
-      // Corrupt cache — start fresh rather than crashing the app.
+      return null;
     }
   }
 
-  private persistCustomNames(): void {
+  private clearLegacyLocalStorage(): void {
     if (typeof localStorage === 'undefined') return;
-    try {
-      localStorage.setItem(
-        CUSTOM_NAMES_STORAGE_KEY,
-        JSON.stringify(this._customExerciseNames()),
-      );
-    } catch {
-      // ignore quota / privacy errors
-    }
+    localStorage.removeItem(LEGACY_STORAGE_KEY);
+    localStorage.removeItem(LEGACY_CUSTOM_NAMES_KEY);
   }
+}
 
-  private loadCustomNamesFromStorage(): void {
-    if (typeof localStorage === 'undefined') return;
-    const raw = localStorage.getItem(CUSTOM_NAMES_STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed: unknown = JSON.parse(raw);
-      if (!Array.isArray(parsed)) return;
-      const names = parsed
-        .filter((v): v is string => typeof v === 'string' && v.trim().length > 0)
-        .map((v) => v.trim());
-      this._customExerciseNames.set(Array.from(new Set(names)));
-    } catch {
-      // Corrupt cache — start fresh.
-    }
-  }
+function normalizeWorkoutFromApi(w: Workout): Workout {
+  return {
+    ...w,
+    date: new Date(w.date).toISOString(),
+    exercises: w.exercises.map((ex) => ({
+      ...ex,
+      sets: ex.sets.map((s) => ({ ...s, weightUnit: s.weightUnit.trim() })),
+    })),
+  };
 }
 
 function sortByDateDesc(list: Workout[]): Workout[] {

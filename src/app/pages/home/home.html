@@ -59,6 +59,20 @@
     </mat-sidenav>
 
     <mat-sidenav-content class="main-pane">
+      @if (!storeReady()) {
+        <div class="store-loading" aria-busy="true" aria-label="Loading workouts">
+          <mat-spinner diameter="40" />
+        </div>
+      } @else if (storeLoadError(); as loadErr) {
+        <p class="store-error" role="alert">
+          Could not load workouts: {{ loadErr }}
+        </p>
+      }
+      @if (storeSaveError(); as saveErr) {
+        <div class="status-banner status-banner--error store-save-error" role="alert">
+          <span>{{ saveErr }}</span>
+        </div>
+      }
       <app-home-main
         [mainView]="mainView()"
         [selectedWorkout]="selectedWorkout()"

@@ -2,6 +2,7 @@ import { BreakpointObserver } from '@angular/cdk/layout';
 import {
   Component,
   ElementRef,
+  OnInit,
   computed,
   inject,
   linkedSignal,
@@ -11,16 +12,21 @@ import {
 import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { AuthService } from '../../core/auth.service';
+import { findImportConflicts } from '../../core/import-merge';
 import {
   WORKOUT_HISTORY_FILENAME,
   WorkoutStoreService,
 } from '../../core/workout-store.service';
 import { HomeMainComponent } from './home-main/home-main';
+import { ImportConflictDialogComponent } from './import-conflict-dialog/import-conflict-dialog';
 import { PastWorkoutsComponent } from './past-workouts/past-workouts';
 import type { Workout, WorkoutSetPatchEvent } from './workout.types';
 
@@ -38,6 +44,7 @@ type MainView = 'welcome' | 'new' | 'edit';
     MatToolbarModule,
     MatButtonModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     MatSidenavModule,
     HomeMainComponent,
     PastWorkoutsComponent,
@@ -45,13 +52,17 @@ type MainView = 'welcome' | 'new' | 'edit';
   templateUrl: './home.html',
   styleUrl: './home.scss',
 })
-export class HomePage {
+export class HomePage implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly store = inject(WorkoutStoreService);
+  private readonly dialog = inject(MatDialog);
   private readonly breakpointObserver = inject(BreakpointObserver);
 
   protected readonly workouts = this.store.workouts;
+  protected readonly storeReady = this.store.ready;
+  protected readonly storeLoadError = this.store.loadError;
+  protected readonly storeSaveError = this.store.saveError;
   protected readonly statusMessage = signal<string | null>(null);
   protected readonly statusKind = signal<'info' | 'error'>('info');
 
@@ -87,6 +98,10 @@ export class HomePage {
   protected readonly sidenavOpened = linkedSignal(() => this.isWideScreen());
 
   private readonly fileInput = viewChild<ElementRef<HTMLInputElement>>('fileInput');
+
+  ngOnInit(): void {
+    void this.store.ensureLoaded();
+  }
 
   protected toggleSidenav(): void {
     this.sidenavOpened.update((v) => !v);
@@ -193,11 +208,23 @@ export class HomePage {
     if (!file) return;
     try {
       const text = await file.text();
-      const workouts = this.store.parseHistoryText(text);
-      this.store.replaceAll(workouts);
-      this.flashStatus('info', `Imported ${workouts.length} workout(s).`);
-      // Reset the main pane since the previously-selected workout may no
-      // longer exist in the freshly-imported set.
+      const imported = this.store.parseHistoryText(text);
+      const conflicts = findImportConflicts(this.workouts(), imported);
+
+      if (conflicts.length > 0) {
+        const ref = this.dialog.open(ImportConflictDialogComponent, {
+          data: { conflicts },
+          disableClose: true,
+          maxWidth: '96vw',
+        });
+        const result = await firstValueFrom(ref.afterClosed());
+        if (!result) return;
+        await this.store.applyImport(imported, result.resolutions);
+      } else {
+        await this.store.applyImport(imported);
+      }
+
+      this.flashStatus('info', `Imported ${imported.length} workout(s).`);
       this.selectedWorkoutId.set(null);
       this.mainView.set('welcome');
     } catch (err) {

@@ -84,6 +84,24 @@
   flex-direction: column;
 }
 
+.store-loading {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.store-error {
+  margin: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container, #ffdad6);
+  color: var(--mat-sys-on-error-container, #410002);
+}
+
+.store-save-error {
+  margin: 0.5rem 1rem 0;
+}
+
 .main-pane {
   background: var(--mat-sys-surface);
 }

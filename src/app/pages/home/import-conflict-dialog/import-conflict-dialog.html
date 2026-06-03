@@ -1,0 +1,106 @@
+<h2 mat-dialog-title>Resolve import conflicts</h2>
+
+<mat-dialog-content class="dialog-content">
+  <p class="intro">
+    These workouts share a date with your saved history but differ in content.
+    Choose which version to keep for each date.
+  </p>
+
+  @for (conflict of data.conflicts; track conflict.dateKey) {
+    <section class="conflict-block">
+      <h3 class="conflict-date">{{ conflict.dateLabel }}</h3>
+
+      <mat-radio-group
+        class="choice-group"
+        [value]="choiceFor(conflict.dateKey)"
+        (change)="setChoice(conflict.dateKey, $event.value)"
+        [attr.aria-label]="'Keep version for ' + conflict.dateLabel"
+      >
+        <div class="version-panel">
+          <mat-radio-button value="existing">Keep current</mat-radio-button>
+          <div class="version-body">
+            @if (conflict.summary.existingNote) {
+              <p class="note">
+                <strong>Note:</strong> {{ conflict.summary.existingNote }}
+              </p>
+            }
+            <ul class="exercise-list">
+              @for (ex of conflict.existing.exercises; track ex.name) {
+                <li>{{ ex.name }}</li>
+              }
+            </ul>
+          </div>
+        </div>
+
+        <div class="version-panel">
+          <mat-radio-button value="imported">Use import</mat-radio-button>
+          <div class="version-body">
+            @if (conflict.summary.importedNote) {
+              <p class="note">
+                <strong>Note:</strong> {{ conflict.summary.importedNote }}
+              </p>
+            }
+            <ul class="exercise-list">
+              @for (ex of conflict.imported.exercises; track ex.name) {
+                <li>{{ ex.name }}</li>
+              }
+            </ul>
+          </div>
+        </div>
+      </mat-radio-group>
+
+      @if (
+        conflict.summary.onlyInExisting.length > 0 ||
+        conflict.summary.onlyInImported.length > 0 ||
+        conflict.summary.changedExercises.length > 0 ||
+        conflict.summary.existingNote !== conflict.summary.importedNote
+      ) {
+        <div class="diff-summary">
+          <h4 class="diff-title">Differences</h4>
+          @if (conflict.summary.existingNote !== conflict.summary.importedNote) {
+            <p class="diff-line">
+              <strong>Note:</strong>
+              current
+              @if (conflict.summary.existingNote) {
+                “{{ conflict.summary.existingNote }}”
+              } @else {
+                (none)
+              }
+              vs import
+              @if (conflict.summary.importedNote) {
+                “{{ conflict.summary.importedNote }}”
+              } @else {
+                (none)
+              }
+            </p>
+          }
+          @if (conflict.summary.onlyInExisting.length > 0) {
+            <p class="diff-line">
+              <strong>Only in current:</strong>
+              {{ conflict.summary.onlyInExisting.join(', ') }}
+            </p>
+          }
+          @if (conflict.summary.onlyInImported.length > 0) {
+            <p class="diff-line">
+              <strong>Only in import:</strong>
+              {{ conflict.summary.onlyInImported.join(', ') }}
+            </p>
+          }
+          @for (row of conflict.summary.changedExercises; track row.name) {
+            <p class="diff-line">
+              <strong>{{ row.name }}:</strong>
+              current ({{ row.existingSummary }}) vs import ({{ row.importedSummary }})
+            </p>
+          }
+        </div>
+      }
+    </section>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button matButton type="button" (click)="cancel()">Cancel</button>
+  <button matButton="filled" type="button" (click)="confirm()">
+    Import with choices
+  </button>
+</mat-dialog-actions>

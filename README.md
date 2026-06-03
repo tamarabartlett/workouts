@@ -1,59 +1,62 @@
 # Workouts
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.7.
+Angular workout log with workouts stored in **MongoDB Atlas** and serverless API routes on **Vercel**.
 
-## Development server
+## Prerequisites
 
-To start a local development server, run:
+- Node.js 20.19+ (or 22.12+)
+- [MongoDB Atlas](https://www.mongodb.com/atlas) cluster and connection string
+- [Vercel CLI](https://vercel.com/docs/cli) for local API development (`npm i -g vercel` or use `npx vercel`)
 
-```bash
-ng serve
-```
+## Environment variables
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Copy `.env.example` to `.env.local` and set:
 
-## Code scaffolding
+| Variable | Description |
+|----------|-------------|
+| `ALLOWED_USERNAME` | Login username |
+| `ALLOWED_PASSWORD_HASH` | Bcrypt hash (`npm run hash-password -- "your-password"`) |
+| `SESSION_SECRET` | Random secret for session cookies (`openssl rand -base64 32`) |
+| `MONGODB_URI` | Atlas connection string |
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+On Vercel, add the same variables under **Project → Settings → Environment Variables** for Production (and Preview if needed).
 
-```bash
-ng generate component component-name
-```
+The `generate-auth-secrets.mjs` script still writes `src/auth-secrets.generated.ts` for builds that expect it; login is validated on the server via `/api/auth/login`.
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## Local development
 
-```bash
-ng generate --help
-```
+Run **two** processes:
 
-## Building
+1. **API** (port 3000):
 
-To build the project run:
+   ```bash
+   npm run dev:api
+   ```
 
-```bash
-ng build
-```
+2. **Angular** (port 4200, proxies `/api` to the API):
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+   ```bash
+   npm start
+   ```
 
-## Running unit tests
+Open `http://localhost:4200`.
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+## Deploy to Vercel
 
-```bash
-ng test
-```
+1. Connect the repo to Vercel.
+2. Set environment variables (`ALLOWED_USERNAME`, `ALLOWED_PASSWORD_HASH`, `SESSION_SECRET`, `MONGODB_URI`).
+3. Deploy. `vercel.json` builds the Angular app and deploys `/api` serverless functions.
 
-## Running end-to-end tests
+In Atlas, allow network access from anywhere (`0.0.0.0/0`) or use [Vercel's IP ranges](https://vercel.com/docs/security/deployment-protection#ip-blocking) if you restrict by IP.
 
-For end-to-end (e2e) testing, run:
+## Import
 
-```bash
-ng e2e
-```
+Importing `workoutHistory.json` merges with saved workouts. If an imported workout shares a **calendar date** with an existing one but differs in exercises, sets, or notes, a dialog shows both versions and lets you choose **Keep current** or **Use import** per date.
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## Export
 
-## Additional Resources
+**Export** downloads the current in-app history as `workoutHistory.json` (same schema as before).
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+## Legacy localStorage
+
+If the database is empty but the browser still has data from an older version, that data is uploaded once on first load and removed from `localStorage`.

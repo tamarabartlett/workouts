@@ -1,0 +1,70 @@
+.dialog-content {
+  min-width: min(560px, 92vw);
+  max-height: 70vh;
+}
+
+.intro {
+  margin: 0 0 1rem;
+  color: var(--mat-sys-on-surface-variant, #49454f);
+}
+
+.conflict-block {
+  padding: 1rem 0;
+  border-top: 1px solid var(--mat-sys-outline-variant, #cac4d0);
+
+  &:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+}
+
+.conflict-date {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.version-panel {
+  border: 1px solid var(--mat-sys-outline-variant, #cac4d0);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem 0.75rem;
+}
+
+.version-body {
+  margin-left: 2rem;
+  font-size: 0.875rem;
+}
+
+.note {
+  margin: 0.25rem 0 0.5rem;
+}
+
+.exercise-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.diff-summary {
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+  background: var(--mat-sys-surface-container-low, #f5f5f5);
+  border-radius: 8px;
+  font-size: 0.875rem;
+}
+
+.diff-title {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.diff-line {
+  margin: 0.25rem 0;
+}
