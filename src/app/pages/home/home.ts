@@ -207,6 +207,7 @@ export class HomePage implements OnInit {
     input.value = '';
     if (!file) return;
     try {
+      await this.store.ensureLoaded();
       const text = await file.text();
       const imported = this.store.parseHistoryText(text);
       const conflicts = findImportConflicts(this.workouts(), imported);

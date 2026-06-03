@@ -20,8 +20,8 @@ export const WORKOUT_HISTORY_VERSION = 1;
 /** Filename suggested when exporting. */
 export const WORKOUT_HISTORY_FILENAME = 'workoutHistory.json';
 
-const LEGACY_STORAGE_KEY = 'workouts_history_v1';
-const LEGACY_CUSTOM_NAMES_KEY = 'workouts_custom_exercise_names_v1';
+const STORAGE_KEY = 'workouts_history_v1';
+const CUSTOM_NAMES_STORAGE_KEY = 'workouts_custom_exercise_names_v1';
 
 @Injectable({ providedIn: 'root' })
 export class WorkoutStoreService {
@@ -120,12 +120,11 @@ export class WorkoutStoreService {
       let customNames = data.customExerciseNames;
 
       if (workouts.length === 0) {
-        const legacy = this.readLegacyLocalStorage();
-        if (legacy) {
-          workouts = legacy.workouts;
-          customNames = legacy.customExerciseNames;
+        const local = this.readLocalStorage();
+        if (local) {
+          workouts = local.workouts;
+          customNames = local.customExerciseNames;
           await this.api.saveWorkouts(workouts, customNames);
-          this.clearLegacyLocalStorage();
         }
       }
 
@@ -133,9 +132,16 @@ export class WorkoutStoreService {
       this._customExerciseNames.set(customNames);
       this.loadError.set(null);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : 'Could not load workouts.';
-      this.loadError.set(message);
+      const local = this.readLocalStorage();
+      if (local) {
+        this._workouts.set(local.workouts);
+        this._customExerciseNames.set(local.customExerciseNames);
+        this.loadError.set(null);
+      } else {
+        const message =
+          err instanceof Error ? err.message : 'Could not load workouts.';
+        this.loadError.set(message);
+      }
     } finally {
       this.ready.set(true);
     }
@@ -174,7 +180,7 @@ export class WorkoutStoreService {
     if (!name) return;
     if (this.exerciseNames().includes(name)) return;
     this._customExerciseNames.update((list) => [name, ...list]);
-    void this.persistCustomNamesOnly();
+    void this.persist();
   }
 
   /**
@@ -185,15 +191,21 @@ export class WorkoutStoreService {
     imported: Workout[],
     resolutions: Record<string, ImportResolution> = {},
   ): Promise<void> {
+    if (!this.ready()) {
+      await this.ensureLoaded();
+    }
     const merged = mergeImportedWorkouts(this._workouts(), imported, resolutions);
     this._workouts.set(sortByDateDesc(merged));
-    await this.persist();
+    await this.persistAndSync();
   }
 
   /** Replace the entire in-memory history (used when import has no conflicts). */
   async replaceAll(workouts: Workout[]): Promise<void> {
+    if (!this.ready()) {
+      await this.ensureLoaded();
+    }
     this._workouts.set(sortByDateDesc(workouts));
-    await this.persist();
+    await this.persistAndSync();
   }
 
   toHistoryFile(): WorkoutHistoryFile {
@@ -214,7 +226,21 @@ export class WorkoutStoreService {
     return normalizeHistory(raw);
   }
 
-  private async persist(): Promise<void> {
+  /** Background save for edits; always writes localStorage, then syncs to the API. */
+  private persist(): void {
+    this.writeLocalStorage();
+    void this.syncToApi().catch(() => {
+      // saveError is set in syncToApi
+    });
+  }
+
+  /** Awaited after import so failures surface and storage is flushed first. */
+  private async persistAndSync(): Promise<void> {
+    this.writeLocalStorage();
+    await this.syncToApi();
+  }
+
+  private async syncToApi(): Promise<void> {
     try {
       await this.api.saveWorkouts(this._workouts(), this._customExerciseNames());
       this.saveError.set(null);
@@ -222,24 +248,34 @@ export class WorkoutStoreService {
       const message =
         err instanceof Error ? err.message : 'Could not save workouts.';
       this.saveError.set(message);
+      throw err;
     }
   }
 
-  private async persistCustomNamesOnly(): Promise<void> {
-    await this.persist();
+  private writeLocalStorage(): void {
+    if (typeof localStorage === 'undefined') return;
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.toHistoryFile()));
+      localStorage.setItem(
+        CUSTOM_NAMES_STORAGE_KEY,
+        JSON.stringify(this._customExerciseNames()),
+      );
+    } catch {
+      // quota / privacy mode — ignore
+    }
   }
 
-  private readLegacyLocalStorage(): {
+  private readLocalStorage(): {
     workouts: Workout[];
     customExerciseNames: string[];
   } | null {
     if (typeof localStorage === 'undefined') return null;
-    const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     try {
       const workouts = sortByDateDesc(normalizeHistory(JSON.parse(raw)));
       let customExerciseNames: string[] = [];
-      const namesRaw = localStorage.getItem(LEGACY_CUSTOM_NAMES_KEY);
+      const namesRaw = localStorage.getItem(CUSTOM_NAMES_STORAGE_KEY);
       if (namesRaw) {
         const parsed: unknown = JSON.parse(namesRaw);
         if (Array.isArray(parsed)) {
@@ -252,12 +288,6 @@ export class WorkoutStoreService {
     } catch {
       return null;
     }
-  }
-
-  private clearLegacyLocalStorage(): void {
-    if (typeof localStorage === 'undefined') return;
-    localStorage.removeItem(LEGACY_STORAGE_KEY);
-    localStorage.removeItem(LEGACY_CUSTOM_NAMES_KEY);
   }
 }
 
