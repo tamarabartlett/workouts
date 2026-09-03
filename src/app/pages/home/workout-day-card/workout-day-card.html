@@ -1,16 +1,17 @@
 <mat-card class="workout-day-card" appearance="outlined">
   <mat-card-header class="card-header">
-    <mat-card-title>{{ date() | date: 'fullDate' }}</mat-card-title>
-    <span class="header-spacer" aria-hidden="true"></span>
-    <button
-      matButton
-      type="button"
-      (click)="toggleEditing()"
-      [attr.aria-pressed]="isEditing()"
-      [attr.aria-label]="isEditing() ? 'Finish editing workout' : 'Edit workout'"
-    >
-      {{ isEditing() ? 'Done' : 'Edit' }}
-    </button>
+    <mat-card-title class="card-title-row">
+      <span class="card-date">{{ date() | date: 'fullDate' }}</span>
+      <button
+        matButton
+        type="button"
+        (click)="toggleEditing()"
+        [attr.aria-pressed]="isEditing()"
+        [attr.aria-label]="isEditing() ? 'Finish editing workout' : 'Edit workout'"
+      >
+        {{ isEditing() ? 'Done' : 'Edit' }}
+      </button>
+    </mat-card-title>
   </mat-card-header>
   <mat-card-content class="card-body">
     @if (isEditing() || note()) {
@@ -44,8 +45,49 @@
         [exercise]="ex"
         [exerciseIndex]="$index"
         [editable]="isEditing()"
+        [canRemoveExercise]="canRemoveExercise()"
         (patchSet)="patchSet.emit($event)"
+        (addSet)="addSet.emit($event)"
+        (removeSet)="removeSet.emit($event)"
+        (removeExercise)="removeExercise.emit($event)"
       />
+    }
+
+    @if (isEditing()) {
+      <section class="add-exercise" aria-label="Add exercise">
+        <h3 class="add-exercise-title">Add exercise</h3>
+        <mat-form-field appearance="outline" class="exercise-select">
+          <mat-label>Exercise</mat-label>
+          <mat-select
+            [value]="selectedExerciseName()"
+            (valueChange)="onSelectedExerciseChange($event)"
+          >
+            @for (name of exerciseSelectNames(); track name) {
+              <mat-option [value]="name">{{ name }}</mat-option>
+            }
+            <mat-option [value]="OTHER_VALUE">Other&hellip;</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        @if (isOtherExercise()) {
+          <mat-form-field appearance="outline" class="custom-name">
+            <mat-label>New exercise name</mat-label>
+            <input
+              matInput
+              type="text"
+              [value]="customExerciseName()"
+              (input)="onCustomExerciseNameInput($event)"
+              autocomplete="off"
+              placeholder="e.g. Bulgarian split squat"
+            />
+          </mat-form-field>
+        }
+
+        <button matButton="filled" type="button" class="add-exercise-button" (click)="onAddExercise()">
+          <mat-icon>add</mat-icon>
+          Add exercise
+        </button>
+      </section>
     }
   </mat-card-content>
 </mat-card>

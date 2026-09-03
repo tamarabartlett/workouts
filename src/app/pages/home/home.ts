@@ -28,13 +28,22 @@ import {
 import { HomeMainComponent } from './home-main/home-main';
 import { ImportConflictDialogComponent } from './import-conflict-dialog/import-conflict-dialog';
 import { PastWorkoutsComponent } from './past-workouts/past-workouts';
-import type { Workout, WorkoutSetPatchEvent } from './workout.types';
+import type {
+  Exercise,
+  Workout,
+  WorkoutExerciseIndexEvent,
+  WorkoutSetIndexEvent,
+  WorkoutSetPatchEvent,
+} from './workout.types';
 
 /**
  * Min width at which the workouts sidenav stays pinned open as a permanent
  * column. Below this we switch to an overlay sidenav toggled by a hamburger.
  */
 const SIDENAV_BREAKPOINT = '(min-width: 960px)';
+
+/** Max width at which toolbar actions collapse to icon-only buttons. */
+const TOOLBAR_COMPACT_BREAKPOINT = '(max-width: 600px)';
 
 type MainView = 'welcome' | 'new' | 'edit';
 
@@ -81,6 +90,14 @@ export class HomePage implements OnInit {
   protected readonly isWideScreen = toSignal(
     this.breakpointObserver
       .observe(SIDENAV_BREAKPOINT)
+      .pipe(map((s) => s.matches)),
+    { initialValue: false },
+  );
+
+  /** True on narrow viewports where toolbar actions show as icons only. */
+  protected readonly isCompactToolbar = toSignal(
+    this.breakpointObserver
+      .observe(TOOLBAR_COMPACT_BREAKPOINT)
       .pipe(map((s) => s.matches)),
     { initialValue: false },
   );
@@ -153,6 +170,48 @@ export class HomePage implements OnInit {
     this.store.patchExercises(workoutId, exercises);
   }
 
+  protected onSetAdded(workoutId: string, ev: WorkoutExerciseIndexEvent): void {
+    const current = this.workouts().find((w) => w.id === workoutId);
+    if (!current) return;
+    const exercises = current.exercises.map((ex, exerciseIndex) => {
+      if (exerciseIndex !== ev.exerciseIndex) return ex;
+      const lastSet = ex.sets[ex.sets.length - 1];
+      const newSet = lastSet
+        ? { ...lastSet }
+        : { reps: 5, weight: 0, weightUnit: 'lb' as const };
+      return { ...ex, sets: [...ex.sets, newSet] };
+    });
+    this.store.patchExercises(workoutId, exercises);
+  }
+
+  protected onSetRemoved(workoutId: string, ev: WorkoutSetIndexEvent): void {
+    const current = this.workouts().find((w) => w.id === workoutId);
+    if (!current) return;
+    const ex = current.exercises[ev.exerciseIndex];
+    if (!ex || ex.sets.length <= 1) return;
+    const exercises = current.exercises.map((item, exerciseIndex) =>
+      exerciseIndex !== ev.exerciseIndex
+        ? item
+        : { ...item, sets: item.sets.filter((_, setIndex) => setIndex !== ev.setIndex) },
+    );
+    this.store.patchExercises(workoutId, exercises);
+  }
+
+  protected onExerciseRemoved(workoutId: string, ev: WorkoutExerciseIndexEvent): void {
+    const current = this.workouts().find((w) => w.id === workoutId);
+    if (!current || current.exercises.length <= 1) return;
+    const exercises = current.exercises.filter(
+      (_, exerciseIndex) => exerciseIndex !== ev.exerciseIndex,
+    );
+    this.store.patchExercises(workoutId, exercises);
+  }
+
+  protected onExerciseAdded(workoutId: string, exercise: Exercise): void {
+    const current = this.workouts().find((w) => w.id === workoutId);
+    if (!current) return;
+    this.store.patchExercises(workoutId, [...current.exercises, exercise]);
+  }
+
   protected onNoteChanged(workoutId: string, note: string): void {
     this.store.patchNote(workoutId, note);
   }
@@ -161,6 +220,30 @@ export class HomePage implements OnInit {
     const id = this.selectedWorkoutId();
     if (!id) return;
     this.onSetPatched(id, ev);
+  }
+
+  protected onSelectedWorkoutSetAdded(ev: WorkoutExerciseIndexEvent): void {
+    const id = this.selectedWorkoutId();
+    if (!id) return;
+    this.onSetAdded(id, ev);
+  }
+
+  protected onSelectedWorkoutSetRemoved(ev: WorkoutSetIndexEvent): void {
+    const id = this.selectedWorkoutId();
+    if (!id) return;
+    this.onSetRemoved(id, ev);
+  }
+
+  protected onSelectedWorkoutExerciseRemoved(ev: WorkoutExerciseIndexEvent): void {
+    const id = this.selectedWorkoutId();
+    if (!id) return;
+    this.onExerciseRemoved(id, ev);
+  }
+
+  protected onSelectedWorkoutExerciseAdded(exercise: Exercise): void {
+    const id = this.selectedWorkoutId();
+    if (!id) return;
+    this.onExerciseAdded(id, exercise);
   }
 
   protected onSelectedWorkoutNoteChanged(note: string): void {

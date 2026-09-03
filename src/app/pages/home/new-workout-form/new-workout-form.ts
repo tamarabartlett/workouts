@@ -10,7 +10,13 @@ import {
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  FormArray,
+  FormBuilder,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -23,14 +29,14 @@ import type { Exercise, NextWorkoutDefaults, Workout } from '../workout.types';
 /** Sentinel value for the "write in a different exercise" dropdown option. */
 const OTHER_VALUE = '__other__';
 
-/** Default unit used when nothing has been chosen before. */
-const DEFAULT_UNIT = 'lb';
+interface DraftSet {
+  reps: number;
+  weight: number;
+}
 
 interface DraftExercise {
   name: string;
-  reps: number;
-  weight: number;
-  weightUnit: string;
+  sets: DraftSet[];
 }
 
 @Component({
@@ -54,7 +60,7 @@ export class NewWorkoutFormComponent implements OnInit {
   private readonly store = inject(WorkoutStoreService);
 
   /**
-   * Last reps/weight/unit per exercise (from {@link WorkoutStoreService.lastExerciseSessions}).
+   * Last reps/weight per exercise (from {@link WorkoutStoreService.lastExerciseSessions}).
    * Passed from the parent so the form pre-fills when the user picks an exercise.
    */
   readonly nextWorkoutDefaults = input.required<ReadonlyMap<string, NextWorkoutDefaults>>();
@@ -67,11 +73,23 @@ export class NewWorkoutFormComponent implements OnInit {
   protected readonly OTHER_VALUE = OTHER_VALUE;
   protected readonly nowIso = new Date().toISOString();
 
-  /** Names known to the app, sorted by most-recently-used (from the store). */
-  protected readonly knownNames = this.store.exerciseNames;
+  /** Most recently used exercise names (from the store). */
+  private readonly storeExerciseNames = this.store.exerciseNames;
+
+  /** Exercise names for the dropdown, sorted A–Z. */
+  protected readonly exerciseSelectNames = computed(() =>
+    [...this.storeExerciseNames()].sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' }),
+    ),
+  );
 
   protected readonly draftExercises = signal<DraftExercise[]>([]);
+  protected readonly editingDraftIndex = signal<number | null>(null);
   protected readonly canSave = computed(() => this.draftExercises().length > 0);
+  protected readonly isEditingDraft = computed(() => this.editingDraftIndex() !== null);
+
+  /** Skips last-session prefill while loading a draft row into the form. */
+  private suppressNameChangePrefill = false;
 
   /** Optional free-form note attached to the new workout. */
   protected readonly noteCtrl = this.fb.nonNullable.control('');
@@ -84,10 +102,12 @@ export class NewWorkoutFormComponent implements OnInit {
   protected readonly addExerciseForm = this.fb.nonNullable.group({
     selectedName: ['', Validators.required],
     customName: [''],
-    reps: [5, [Validators.required, Validators.min(0)]],
-    weight: [0, [Validators.required, Validators.min(0)]],
-    weightUnit: [DEFAULT_UNIT, Validators.required],
+    sets: this.fb.nonNullable.array([this.createSetGroup(5, 0)]),
   });
+
+  protected get setsArray(): FormArray<FormGroup> {
+    return this.addExerciseForm.controls.sets;
+  }
 
   protected readonly isOther = signal(false);
 
@@ -99,14 +119,14 @@ export class NewWorkoutFormComponent implements OnInit {
 
   ngOnInit(): void {
     // Inputs are available here; default-select the most recently used exercise.
-    const first = this.knownNames()[0] ?? OTHER_VALUE;
+    const first = this.storeExerciseNames()[0] ?? OTHER_VALUE;
     this.addExerciseForm.patchValue({ selectedName: first });
     this.onSelectedNameChange(first);
   }
 
   /**
    * Reacts to the exercise dropdown changing: keeps `isOther` and the
-   * customName validator in sync, and prefills reps/weight/unit from the
+   * customName validator in sync, and prefills reps/weight from the
    * last time the user did the selected exercise so they only have to
    * adjust deltas (or confirm) before adding it to the draft.
    */
@@ -123,13 +143,29 @@ export class NewWorkoutFormComponent implements OnInit {
     }
     customCtrl.updateValueAndValidity({ emitEvent: false });
 
-    if (other) return;
+    if (this.suppressNameChangePrefill || other) return;
     const last = this.nextWorkoutDefaults().get(val);
     if (!last) return;
-    this.addExerciseForm.patchValue(
-      { reps: last.reps, weight: last.weight, weightUnit: last.weightUnit },
-      { emitEvent: false },
-    );
+    const first = this.setsArray.at(0);
+    if (first) {
+      first.patchValue(
+        { reps: last.reps, weight: last.weight },
+        { emitEvent: false },
+      );
+    } else {
+      this.resetSets(last.reps, last.weight);
+    }
+  }
+
+  protected addSet(): void {
+    const sets = this.setsArray;
+    const { reps, weight } = sets.at(sets.length - 1).getRawValue();
+    sets.push(this.createSetGroup(reps, weight));
+  }
+
+  protected removeSet(index: number): void {
+    if (this.setsArray.length <= 1) return;
+    this.setsArray.removeAt(index);
   }
 
   protected addExercise(): void {
@@ -137,8 +173,7 @@ export class NewWorkoutFormComponent implements OnInit {
       this.addExerciseForm.markAllAsTouched();
       return;
     }
-    const { selectedName, customName, reps, weight, weightUnit } =
-      this.addExerciseForm.getRawValue();
+    const { selectedName, customName, sets } = this.addExerciseForm.getRawValue();
     const name =
       selectedName === OTHER_VALUE ? customName.trim() : selectedName.trim();
     if (!name) return;
@@ -149,26 +184,87 @@ export class NewWorkoutFormComponent implements OnInit {
       this.store.rememberCustomExerciseName(name);
     }
 
-    this.draftExercises.update((list) => [
-      ...list,
-      { name, reps, weight, weightUnit },
-    ]);
+    const draftSets: DraftSet[] = sets.map(({ reps, weight }) => ({ reps, weight }));
+    const editingIndex = this.editingDraftIndex();
+    if (editingIndex !== null) {
+      this.draftExercises.update((list) => {
+        const next = [...list];
+        next[editingIndex] = { name, sets: draftSets };
+        return next;
+      });
+      this.editingDraftIndex.set(null);
+    } else {
+      this.draftExercises.update((list) => [...list, { name, sets: draftSets }]);
+    }
 
-    // Reset for the next add, keeping the previously chosen unit so users
-    // adding multiple lb (or kg) exercises don't have to re-pick each time.
-    const nextSelected = this.knownNames()[0] ?? OTHER_VALUE;
-    this.addExerciseForm.reset({
+    this.resetAddExerciseForm();
+  }
+
+  protected editDraft(index: number): void {
+    const ex = this.draftExercises()[index];
+    if (!ex) return;
+    this.editingDraftIndex.set(index);
+    this.loadDraftIntoForm(ex);
+  }
+
+  private loadDraftIntoForm(ex: DraftExercise): void {
+    this.suppressNameChangePrefill = true;
+    const isKnown = this.exerciseSelectNames().includes(ex.name);
+    if (isKnown) {
+      this.addExerciseForm.patchValue({ selectedName: ex.name, customName: '' });
+      this.onSelectedNameChange(ex.name);
+    } else {
+      this.addExerciseForm.patchValue({
+        selectedName: OTHER_VALUE,
+        customName: ex.name,
+      });
+      this.onSelectedNameChange(OTHER_VALUE);
+    }
+    this.loadSetsIntoForm(ex.sets);
+    this.suppressNameChangePrefill = false;
+  }
+
+  private loadSetsIntoForm(sets: DraftSet[]): void {
+    this.setsArray.clear({ emitEvent: false });
+    for (const set of sets) {
+      this.setsArray.push(this.createSetGroup(set.reps, set.weight), {
+        emitEvent: false,
+      });
+    }
+  }
+
+  private resetAddExerciseForm(): void {
+    const nextSelected = this.storeExerciseNames()[0] ?? OTHER_VALUE;
+    this.addExerciseForm.patchValue({
       selectedName: nextSelected,
       customName: '',
-      reps: 5,
-      weight: 0,
-      weightUnit,
     });
+    this.resetSets(5, 0);
     this.onSelectedNameChange(nextSelected);
+  }
+
+  private createSetGroup(reps: number, weight: number): FormGroup {
+    return this.fb.nonNullable.group({
+      reps: [reps, [Validators.required, Validators.min(0)]],
+      weight: [weight, [Validators.required, Validators.min(0)]],
+    });
+  }
+
+  private resetSets(reps = 5, weight = 0): void {
+    this.setsArray.clear({ emitEvent: false });
+    this.setsArray.push(this.createSetGroup(reps, weight), { emitEvent: false });
   }
 
   protected removeDraft(index: number): void {
     this.draftExercises.update((list) => list.filter((_, i) => i !== index));
+    const editing = this.editingDraftIndex();
+    if (editing === null) return;
+    if (editing === index) {
+      this.editingDraftIndex.set(null);
+      this.resetAddExerciseForm();
+    } else if (editing > index) {
+      this.editingDraftIndex.set(editing - 1);
+    }
   }
 
   protected onCancel(): void {
@@ -179,7 +275,7 @@ export class NewWorkoutFormComponent implements OnInit {
     if (!this.canSave()) return;
     const exercises: Exercise[] = this.draftExercises().map((d) => ({
       name: d.name,
-      sets: [{ reps: d.reps, weight: d.weight, weightUnit: d.weightUnit }],
+      sets: d.sets.map((s) => ({ ...s, weightUnit: 'lb' })),
     }));
     const note = this.noteCtrl.value.trim();
     const workout: Workout = {

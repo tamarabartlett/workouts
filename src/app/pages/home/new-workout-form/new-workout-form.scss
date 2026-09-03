@@ -48,6 +48,11 @@
   border: 1px solid var(--mat-sys-outline-variant);
   border-radius: 8px;
   background: var(--mat-sys-surface-container-low);
+
+  &--editing {
+    border-color: var(--mat-sys-primary);
+    background: var(--mat-sys-primary-container);
+  }
 }
 
 .draft-info {
@@ -55,6 +60,27 @@
   flex-direction: column;
   flex: 1;
   min-width: 0;
+  padding: 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+
+  &:hover {
+    background: color-mix(in srgb, var(--mat-sys-on-surface) 6%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}
+
+.draft-row--editing .draft-info:hover {
+  background: transparent;
 }
 
 .draft-name {
@@ -86,17 +112,58 @@
   width: 100%;
 }
 
-.set-fields {
+.sets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.set-row {
   display: grid;
-  grid-template-columns: 1fr 1fr minmax(5rem, auto);
+  grid-template-columns: 1fr 1fr auto;
   gap: 0.5rem;
+  align-items: center;
 }
 
-.num-field,
-.unit-field {
+.set-input {
   width: 100%;
+  box-sizing: border-box;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 4px;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface);
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
 }
 
+.set-weight-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.set-weight-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.set-unit {
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+}
+
+.remove-set-button {
+  flex-shrink: 0;
+}
+
+.add-set-button,
 .add-button {
   align-self: flex-start;
 }
@@ -105,12 +172,3 @@
   padding: 0 1rem 1rem;
 }
 
-@media (max-width: 480px) {
-  .set-fields {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .unit-field {
-    grid-column: 1 / -1;
-  }
-}

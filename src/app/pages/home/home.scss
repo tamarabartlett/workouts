@@ -66,7 +66,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  flex-shrink: 0;
 }
 
 .sidenav-container {
@@ -120,6 +120,6 @@
 
 @media (max-width: 600px) {
   .toolbar-actions {
-    gap: 0.25rem;
+    gap: 0;
   }
 }

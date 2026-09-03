@@ -1,62 +1,171 @@
 # Workouts
 
-Angular workout log with workouts stored in **MongoDB Atlas** and serverless API routes on **Vercel**.
+Personal workout log. The Angular app talks to serverless API routes that store data in **MongoDB Atlas**. Production runs on **Vercel**.
+
+Login is a single username and password that you set yourself. Workouts persist in MongoDB, not in the browser (except a one-time migration from older localStorage data).
+
+---
 
 ## Prerequisites
 
-- Node.js 20.19+ (or 22.12+)
-- [MongoDB Atlas](https://www.mongodb.com/atlas) cluster and connection string
-- [Vercel CLI](https://vercel.com/docs/cli) for local API development (`npm i -g vercel` or use `npx vercel`)
+- **Node.js** 20.19+ or 22.12+ (and npm)
+- A **[MongoDB Atlas](https://www.mongodb.com/atlas)** cluster and connection string
+- **[Vercel CLI](https://vercel.com/docs/cli)** for the local API (`npm i -g vercel`, or use `npx vercel`)
 
-## Environment variables
+---
 
-Copy `.env.example` to `.env.local` and set:
+## One-time setup
 
-| Variable | Description |
-|----------|-------------|
-| `ALLOWED_USERNAME` | Login username |
-| `ALLOWED_PASSWORD_HASH` | Bcrypt hash (`npm run hash-password -- "your-password"`) |
-| `SESSION_SECRET` | Random secret for session cookies (`openssl rand -base64 32`) |
-| `MONGODB_URI` | Atlas connection string |
+Do this once on a new machine (or after cloning).
 
-On Vercel, add the same variables under **Project → Settings → Environment Variables** for Production (and Preview if needed).
+### 1. Install dependencies
 
-The `generate-auth-secrets.mjs` script still writes `src/auth-secrets.generated.ts` for builds that expect it; login is validated on the server via `/api/auth/login`.
+```bash
+npm install
+```
 
-## Local development
+### 2. Create a MongoDB Atlas database
 
-Run **two** processes:
+1. Create a free cluster at [cloud.mongodb.com](https://cloud.mongodb.com).
+2. Under **Database Access**, create a database user with a password.
+3. Under **Network Access**, allow your current IP (for local use). For Vercel, also allow `0.0.0.0/0` or [Vercel’s IP ranges](https://vercel.com/docs/security/deployment-protection#ip-blocking).
+4. On the cluster, click **Connect → Drivers** and copy the connection string. It looks like:
 
-1. **API** (port 3000):
+   `mongodb+srv://USER:PASSWORD@cluster.xxxxx.mongodb.net/workouts?retryWrites=true&w=majority`
 
-   ```bash
-   npm run dev:api
-   ```
+   Replace `USER` and `PASSWORD`. A database name in the path (`workouts` above) is recommended.
 
-2. **Angular** (port 4200, proxies `/api` to the API):
+### 3. Create `.env.local`
 
-   ```bash
-   npm start
-   ```
+```bash
+cp .env.example .env.local
+```
 
-Open `http://localhost:4200`.
+Fill in every required value:
+
+| Variable | How to set it |
+|----------|----------------|
+| `ALLOWED_USERNAME` | The login name you want (plain text). |
+| `ALLOWED_PASSWORD_HASH` | Bcrypt hash of your password (see below). **Do not put the raw password here.** |
+| `SESSION_SECRET` | Long random string, 32+ characters. |
+| `MONGODB_URI` | Atlas connection string from step 2. |
+
+Generate the password hash:
+
+```bash
+npm run hash-password -- "your-password"
+```
+
+Paste the printed hash into `ALLOWED_PASSWORD_HASH`.
+
+Generate a session secret:
+
+```bash
+openssl rand -base64 32
+```
+
+Paste that into `SESSION_SECRET`.
+
+Optional: `CORS_ORIGIN` defaults to `http://localhost:4200` for local API calls. You only need to set it if the Angular app is on a different origin.
+
+`.env.local` is gitignored. Never commit it.
+
+`npm start` / `npm run build` / `npm install` automatically generate `src/auth-secrets.generated.ts` from these values. You do not run that script yourself.
+
+### 4. Log in to Vercel (needed for the local API)
+
+`npm run dev:api` runs `vercel dev`. On a new machine:
+
+```bash
+npx vercel login
+```
+
+The first `npm run dev:api` may ask you to link this folder to a Vercel project. That is expected; you can create a new project or skip linking and still run locally if `.env.local` is set.
+
+---
+
+## Run locally
+
+You need **two terminals**. The Angular app (port 4200) proxies `/api` to the API (port 3000).
+
+**Terminal 1 — API**
+
+```bash
+npm run dev:api
+```
+
+Wait until Vercel reports it is listening on port 3000.
+
+**Terminal 2 — Angular**
+
+```bash
+npm start
+```
+
+Open **http://localhost:4200** and sign in with the username and password you chose (the password is the one you hashed, not the hash itself).
+
+If login fails or workouts do not load, check that both processes are running and that `.env.local` has all four required variables.
+
+---
 
 ## Deploy to Vercel
 
-1. Connect the repo to Vercel.
-2. Set environment variables (`ALLOWED_USERNAME`, `ALLOWED_PASSWORD_HASH`, `SESSION_SECRET`, `MONGODB_URI`).
-3. Deploy. `vercel.json` builds the Angular app and deploys `/api` serverless functions.
+The repo is already set up: `vercel.json` builds the Angular app and serves `/api` as serverless functions.
 
-In Atlas, allow network access from anywhere (`0.0.0.0/0`) or use [Vercel's IP ranges](https://vercel.com/docs/security/deployment-protection#ip-blocking) if you restrict by IP.
+### Option A — Dashboard (connect the GitHub repo)
 
-## Import
+1. Import the repo at [vercel.com/new](https://vercel.com/new). Framework / build settings can stay on the defaults from `vercel.json` (`npm run build`, output `dist/workouts/browser`).
+2. Add the **same four environment variables** as `.env.local`:
+   - `ALLOWED_USERNAME`
+   - `ALLOWED_PASSWORD_HASH`
+   - `SESSION_SECRET`
+   - `MONGODB_URI`
 
-Importing `workoutHistory.json` merges with saved workouts. If an imported workout shares a **calendar date** with an existing one but differs in exercises, sets, or notes, a dialog shows both versions and lets you choose **Keep current** or **Use import** per date.
+   Apply them to **Production** (and **Preview** if you want preview deploys to work).
+3. Deploy. After it finishes, open the Vercel URL and log in.
 
-## Export
+### Option B — CLI
 
-**Export** downloads the current in-app history as `workoutHistory.json` (same schema as before).
+```bash
+npx vercel login
+npx vercel link          # once, if this folder is not linked yet
+```
+
+Add env vars in the Vercel dashboard (Project → Settings → Environment Variables), or with the CLI:
+
+```bash
+npx vercel env add ALLOWED_USERNAME
+npx vercel env add ALLOWED_PASSWORD_HASH
+npx vercel env add SESSION_SECRET
+npx vercel env add MONGODB_URI
+```
+
+Then:
+
+```bash
+npm run deploy
+```
+
+That runs `vercel --prod`.
+
+### After deploy
+
+- In Atlas, production traffic will fail if the cluster only allows your home IP. Allow `0.0.0.0/0` or Vercel’s IPs.
+- Changing env vars on Vercel requires a **redeploy** before they take effect.
+- Use a different `SESSION_SECRET` in production than you use locally if you want sessions isolated.
+
+---
+
+## Import and export
+
+**Export** downloads the current history as `workoutHistory.json`.
+
+**Import** merges a `workoutHistory.json` file into saved workouts. If an imported workout shares a **calendar date** with an existing one but differs in exercises, sets, or notes, a dialog shows both versions. You choose **Keep current** or **Use import** per date.
+
+`workoutHistory.example.json` is a sample of the file shape.
+
+---
 
 ## Legacy localStorage
 
-If the database is empty but the browser still has data from an older version, that data is uploaded once on first load and removed from `localStorage`.
+Older versions stored workouts in the browser. If MongoDB is empty and the browser still has that data, it is uploaded once on first load and then removed from `localStorage`.

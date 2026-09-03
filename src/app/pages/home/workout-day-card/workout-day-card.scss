@@ -4,15 +4,19 @@
 }
 
 .card-header {
+  display: block;
+}
+
+.card-title-row {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   flex-wrap: wrap;
+  margin: 0;
 }
 
-.header-spacer {
-  flex: 1;
-  min-width: 0;
+.card-date {
+  font: inherit;
 }
 
 .card-body {
@@ -44,4 +48,28 @@
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface);
   white-space: pre-wrap;
+}
+
+.add-exercise {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.add-exercise-title {
+  margin: 0 0 0.25rem;
+  font: var(--mat-sys-title-small);
+  color: var(--mat-sys-on-surface);
+}
+
+.exercise-select,
+.custom-name {
+  width: 100%;
+}
+
+.add-exercise-button {
+  align-self: flex-start;
 }

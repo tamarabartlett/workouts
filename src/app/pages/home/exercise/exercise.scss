@@ -8,10 +8,22 @@
   }
 }
 
+.exercise-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .exercise-name {
-  margin: 0 0 0.75rem;
+  margin: 0;
   font: var(--mat-sys-title-medium);
   color: var(--mat-sys-on-surface);
+}
+
+.remove-exercise-button {
+  flex-shrink: 0;
 }
 
 .sets {
@@ -30,6 +42,19 @@
   align-items: baseline;
   font: var(--mat-sys-body-medium);
   color: var(--mat-sys-on-surface-variant);
+
+  &--editing {
+    grid-template-columns: minmax(4rem, auto) 1fr 1fr auto;
+    align-items: center;
+  }
+}
+
+.add-set-button {
+  margin-top: 0.5rem;
+}
+
+.remove-set-button {
+  flex-shrink: 0;
 }
 
 .set-label {

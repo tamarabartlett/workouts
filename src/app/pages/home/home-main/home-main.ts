@@ -4,7 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { WorkoutStoreService } from '../../../core/workout-store.service';
 import { NewWorkoutFormComponent } from '../new-workout-form/new-workout-form';
-import type { Workout, WorkoutSetPatchEvent } from '../workout.types';
+import type { Exercise, Workout, WorkoutExerciseIndexEvent, WorkoutSetIndexEvent, WorkoutSetPatchEvent } from '../workout.types';
 import { WorkoutDayCardComponent } from '../workout-day-card/workout-day-card';
 
 type MainView = 'welcome' | 'new' | 'edit';
@@ -39,6 +39,10 @@ export class HomeMainComponent {
   readonly cancel = output<void>();
   readonly patchSet = output<WorkoutSetPatchEvent>();
   readonly noteChange = output<string>();
+  readonly addSet = output<WorkoutExerciseIndexEvent>();
+  readonly removeSet = output<WorkoutSetIndexEvent>();
+  readonly removeExercise = output<WorkoutExerciseIndexEvent>();
+  readonly addExercise = output<Exercise>();
   readonly startNewWorkout = output<void>();
 
   protected parseWorkoutDate(iso: string): Date {

@@ -63,3 +63,14 @@ export interface WorkoutSetPatchEvent {
   reps: number;
   weight: number;
 }
+
+/** Identifies an exercise in a workout list (for add/remove exercise events). */
+export interface WorkoutExerciseIndexEvent {
+  exerciseIndex: number;
+}
+
+/** Identifies a set within an exercise (for remove-set events). */
+export interface WorkoutSetIndexEvent {
+  exerciseIndex: number;
+  setIndex: number;
+}

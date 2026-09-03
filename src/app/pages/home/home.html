@@ -28,9 +28,36 @@
     </button>
     <span class="spacer"></span>
     <div class="toolbar-actions">
-      <button matButton type="button" (click)="exportHistory()">Export</button>
-      <button matButton type="button" (click)="triggerImport()">Import</button>
-      <button matButton type="button" (click)="logout()">Log out</button>
+      @if (isCompactToolbar()) {
+        <button
+          matIconButton
+          type="button"
+          (click)="exportHistory()"
+          aria-label="Export workout history"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
+        <button
+          matIconButton
+          type="button"
+          (click)="triggerImport()"
+          aria-label="Import workout history"
+        >
+          <mat-icon>upload</mat-icon>
+        </button>
+        <button
+          matIconButton
+          type="button"
+          (click)="logout()"
+          aria-label="Log out"
+        >
+          <mat-icon>logout</mat-icon>
+        </button>
+      } @else {
+        <button matButton type="button" (click)="exportHistory()">Export</button>
+        <button matButton type="button" (click)="triggerImport()">Import</button>
+        <button matButton type="button" (click)="logout()">Log out</button>
+      }
     </div>
   </mat-toolbar>
 
@@ -83,6 +110,10 @@
         (cancel)="onNewWorkoutCancelled()"
         (patchSet)="onSelectedWorkoutSetPatched($event)"
         (noteChange)="onSelectedWorkoutNoteChanged($event)"
+        (addSet)="onSelectedWorkoutSetAdded($event)"
+        (removeSet)="onSelectedWorkoutSetRemoved($event)"
+        (removeExercise)="onSelectedWorkoutExerciseRemoved($event)"
+        (addExercise)="onSelectedWorkoutExerciseAdded($event)"
         (startNewWorkout)="startNewWorkout()"
       />
     </mat-sidenav-content>

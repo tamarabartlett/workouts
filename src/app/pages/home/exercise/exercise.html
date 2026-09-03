@@ -1,5 +1,18 @@
 <section class="exercise">
-  <h3 class="exercise-name">{{ exercise().name }}</h3>
+  <div class="exercise-header">
+    <h3 class="exercise-name">{{ exercise().name }}</h3>
+    @if (editable() && canRemoveExercise()) {
+      <button
+        matButton
+        type="button"
+        class="remove-exercise-button"
+        (click)="onRemoveExercise()"
+        [attr.aria-label]="'Remove ' + exercise().name"
+      >
+        Remove
+      </button>
+    }
+  </div>
   <ol class="sets" aria-label="Sets">
     @for (set of exercise().sets; track $index) {
       <li class="set-row" [class.set-row--editing]="editable()">
@@ -26,6 +39,17 @@
             />
             <span class="set-unit">{{ set.weightUnit }}</span>
           </span>
+          @if (exercise().sets.length > 1) {
+            <button
+              matIconButton
+              type="button"
+              class="remove-set-button"
+              (click)="onRemoveSet($index)"
+              [attr.aria-label]="'Remove set ' + ($index + 1) + ', ' + exercise().name"
+            >
+              <mat-icon>close</mat-icon>
+            </button>
+          }
         } @else {
           <span class="set-reps">{{ set.reps }} reps</span>
           <span class="set-weight">{{ set.weight }} {{ set.weightUnit }}</span>
@@ -33,4 +57,10 @@
       </li>
     }
   </ol>
+  @if (editable()) {
+    <button matButton type="button" class="add-set-button" (click)="onAddSet()">
+      <mat-icon>add</mat-icon>
+      Add set
+    </button>
+  }
 </section>

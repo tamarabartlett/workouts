@@ -20,13 +20,24 @@
     @if (draftExercises().length > 0) {
       <ol class="draft-list" aria-label="Exercises in this workout">
         @for (ex of draftExercises(); track $index) {
-          <li class="draft-row">
-            <div class="draft-info">
+          <li
+            class="draft-row"
+            [class.draft-row--editing]="editingDraftIndex() === $index"
+          >
+            <button
+              type="button"
+              class="draft-info"
+              (click)="editDraft($index)"
+              [attr.aria-label]="'Edit ' + ex.name"
+              [attr.aria-current]="editingDraftIndex() === $index ? 'true' : null"
+            >
               <span class="draft-name">{{ ex.name }}</span>
               <span class="draft-meta">
-                {{ ex.reps }} reps &middot; {{ ex.weight }} {{ ex.weightUnit }}
+                @for (set of ex.sets; track $index; let last = $last) {
+                  {{ set.reps }} &times; {{ set.weight }} lb@if (!last) {; }
+                }
               </span>
-            </div>
+            </button>
             <button
               matButton
               type="button"
@@ -50,7 +61,7 @@
       <mat-form-field appearance="outline" class="exercise-select">
         <mat-label>Exercise</mat-label>
         <mat-select formControlName="selectedName">
-          @for (name of knownNames(); track name) {
+          @for (name of exerciseSelectNames(); track name) {
             <mat-option [value]="name">{{ name }}</mat-option>
           }
           <mat-option [value]="OTHER_VALUE">Other&hellip;</mat-option>
@@ -70,35 +81,51 @@
         </mat-form-field>
       }
 
-      <div class="set-fields">
-        <mat-form-field appearance="outline" class="num-field">
-          <mat-label>Reps</mat-label>
-          <input matInput type="number" min="0" step="1" formControlName="reps" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="num-field">
-          <mat-label>Weight</mat-label>
-          <input
-            matInput
-            type="number"
-            min="0"
-            step="0.5"
-            formControlName="weight"
-          />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="unit-field">
-          <mat-label>Unit</mat-label>
-          <mat-select formControlName="weightUnit">
-            <mat-option value="lb">lb</mat-option>
-            <mat-option value="kg">kg</mat-option>
-          </mat-select>
-        </mat-form-field>
+      <div formArrayName="sets" class="sets-list">
+        @for (set of setsArray.controls; track $index) {
+          <div class="set-row" [formGroupName]="$index">
+            <input
+              class="set-input set-reps-input"
+              type="number"
+              min="0"
+              step="1"
+              formControlName="reps"
+              aria-label="Reps"
+            />
+            <span class="set-weight-field">
+              <input
+                class="set-input set-weight-input"
+                type="number"
+                min="0"
+                step="0.5"
+                formControlName="weight"
+                aria-label="Weight (lb)"
+              />
+              <span class="set-unit">lb</span>
+            </span>
+            @if (setsArray.length > 1) {
+              <button
+                matIconButton
+                type="button"
+                class="remove-set-button"
+                (click)="removeSet($index)"
+                [attr.aria-label]="'Remove set ' + ($index + 1)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+        }
       </div>
 
-      <button matButton="filled" type="submit" class="add-button">
+      <button matButton type="button" class="add-set-button" (click)="addSet()">
         <mat-icon>add</mat-icon>
-        Add exercise
+        Add set
+      </button>
+
+      <button matButton="filled" type="submit" class="add-button">
+        <mat-icon>{{ isEditingDraft() ? 'save' : 'add' }}</mat-icon>
+        {{ isEditingDraft() ? 'Update exercise' : 'Add exercise' }}
       </button>
     </form>
   </mat-card-content>
